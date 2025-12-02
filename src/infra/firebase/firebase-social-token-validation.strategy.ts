@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { TokenValidationStrategy } from './token-validation.strategy';
-import { FirebaseAuthService } from '../../../infra/firebase/firebase-auth.service';
+import { TokenValidationStrategy } from '../../common/types/token-validation.strategy';
+import { FirebaseAuthService } from './firebase-auth.service';
 
 /**
  * Firebase Social Token Validation Strategy

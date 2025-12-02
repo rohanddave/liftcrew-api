@@ -5,7 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { getBearerToken } from '../utils/auth.utils';
-import { JWTTokenValidation } from '../../features/auth/strategies';
+import { JWTTokenValidation } from 'src/features/auth/jwt-token-validation.strategy';
 
 @Injectable()
 export class JWTTokenGuard implements CanActivate {

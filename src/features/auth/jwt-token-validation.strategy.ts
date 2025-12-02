@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as jwt from 'jsonwebtoken';
-import { TokenValidationStrategy } from './token-validation.strategy';
+import { TokenValidationStrategy } from '../../common/types/token-validation.strategy';
 
 /**
  * JWT Token Validation Strategy

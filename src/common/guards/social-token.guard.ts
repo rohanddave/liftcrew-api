@@ -5,7 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { getBearerToken } from '../utils/auth.utils';
-import { FirebaseSocialTokenValidation } from '../../features/auth/strategies';
+import { FirebaseSocialTokenValidation } from '../../infra/firebase/firebase-social-token-validation.strategy';
 
 @Injectable()
 export class SocialTokenGuard implements CanActivate {
