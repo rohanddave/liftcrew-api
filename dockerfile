@@ -1,5 +1,5 @@
 # Base stage - common dependencies
-FROM node:18-alpine AS base
+FROM node:20-alpine AS base
 WORKDIR /usr/src/app
 COPY package*.json ./
 
@@ -17,7 +17,7 @@ COPY . .
 RUN npm run build
 
 # Production stage
-FROM node:18-alpine AS production
+FROM node:20-alpine AS production
 WORKDIR /usr/src/app
 COPY package*.json ./
 RUN npm install --omit=dev
