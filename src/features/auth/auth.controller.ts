@@ -4,8 +4,11 @@ import {
   Body,
   Headers,
   BadRequestException,
+  UseGuards,
+  Req,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { SocialTokenGuard } from 'src/common/guards';
 
 @Controller('auth')
 export class AuthController {
@@ -22,20 +25,8 @@ export class AuthController {
   }
 
   @Post('exchange')
-  async exchangeToken(@Headers('authorization') authorization: string) {
-    if (!authorization) {
-      throw new BadRequestException('Authorization header is required');
-    }
-
-    // Extract token from "Bearer <token>" format
-    const parts = authorization.split(' ');
-    if (parts.length !== 2 || parts[0] !== 'Bearer') {
-      throw new BadRequestException(
-        'Authorization header must be in format: Bearer <token>',
-      );
-    }
-
-    const firebaseToken = parts[1];
-    return this.authService.exchangeFirebaseToken(firebaseToken);
+  @UseGuards(SocialTokenGuard)
+  async exchangeToken(@Req() req: { socialToken: string }) {
+    return this.authService.exchangeFirebaseToken(req.socialToken);
   }
 }
