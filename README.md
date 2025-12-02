@@ -8,6 +8,7 @@ NestJS backend API with Fastify, TypeORM, PostgreSQL, Redis, and Neo4j.
 - TypeORM with PostgreSQL
 - Neo4j graph database
 - Redis caching
+- Firebase Authentication (Phone, Google, Apple)
 - Docker support (dev & production)
 - Swagger API documentation
 
@@ -28,6 +29,7 @@ REDIS_PORT=6379
 NEO4J_URI=bolt://localhost:7687
 NEO4J_USERNAME=neo4j
 NEO4J_PASSWORD=liftcrew123
+FIREBASE_SERVICE_ACCOUNT=<see serviceAccount.json - already configured>
 ```
 
 ## Local Development
@@ -83,6 +85,22 @@ docker run -p 3000:3000 liftcrew-api:prod
 - **Redis**: localhost:6379
 - **Neo4j Browser**: http://localhost:7474 (username: neo4j, password: liftcrew123)
 - **Neo4j Bolt**: bolt://localhost:7687
+
+## Firebase Authentication
+
+The project is configured with Firebase Authentication for Phone, Google, and Apple sign-in.
+
+**Project ID:** `liftcrew-df66d`
+**Service Account:** Already configured in `.env`
+
+### API Endpoints:
+- `POST /firebase-auth/phone` - Phone authentication
+- `POST /firebase-auth/google` - Google authentication
+- `POST /firebase-auth/apple` - Apple authentication
+- `POST /firebase-auth/verify-token` - Verify Firebase token
+- `GET /firebase-auth/user/:uid` - Get user by UID
+
+See `src/firebase/README.md` for detailed documentation.
 
 ## Testing
 

@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { CacheModule } from '@nestjs/cache-manager';
+import { FirebaseModule } from './firebase/firebase.module';
 import { GymsModule } from './gyms/gyms.module';
 import { Module } from '@nestjs/common';
 import { Neo4jModule } from './neo4j/neo4j.module';
@@ -35,6 +36,7 @@ import { UsersModule } from './users/users.module';
       inject: [ConfigService],
     }),
     Neo4jModule,
+    FirebaseModule,
     AuthModule,
     UsersModule,
     GymsModule,
