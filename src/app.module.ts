@@ -2,10 +2,13 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AuthModule } from './auth/auth.module';
 import { CacheModule } from '@nestjs/cache-manager';
+import { GymsModule } from './gyms/gyms.module';
 import { Module } from '@nestjs/common';
 import { Neo4jModule } from './neo4j/neo4j.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -32,6 +35,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       inject: [ConfigService],
     }),
     Neo4jModule,
+    AuthModule,
+    UsersModule,
+    GymsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
