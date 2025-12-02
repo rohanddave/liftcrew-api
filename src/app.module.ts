@@ -1,15 +1,13 @@
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { AuthModule } from './auth/auth.module';
+import { AuthModule } from './features/auth/auth.module';
 import { CacheModule } from '@nestjs/cache-manager';
-import { FirebaseModule } from './firebase/firebase.module';
-import { GymsModule } from './gyms/gyms.module';
+import { FirebaseModule } from './infra/firebase/firebase.module';
+import { GymsModule } from './features/gyms/gyms.module';
 import { Module } from '@nestjs/common';
-import { Neo4jModule } from './neo4j/neo4j.module';
+import { Neo4jModule } from './infra/neo4j/neo4j.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UsersModule } from './users/users.module';
+import { UsersModule } from './features/users/users.module';
 
 @Module({
   imports: [
@@ -41,7 +39,7 @@ import { UsersModule } from './users/users.module';
     UsersModule,
     GymsModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [],
+  providers: [],
 })
 export class AppModule {}
