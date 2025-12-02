@@ -11,8 +11,8 @@ services:
       - DATABASE_HOST=db
       - DATABASE_PORT=5432
       - DATABASE_USER=postgres
-      - DATABASE_PASSWORD=oneprediction
-      - DATABASE_NAME=oneprediction
+      - DATABASE_PASSWORD=liftcrew
+      - DATABASE_NAME=liftcrew
       - MODE=DEV
       - RUN_MIGRATIONS=true
       - REDIS_HOST=redis
@@ -27,9 +27,9 @@ services:
     image: postgres:latest
     container_name: postgres-db
     environment:
-      - POSTGRES_DB=oneprediction
+      - POSTGRES_DB=liftcrew
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=oneprediction
+      - POSTGRES_PASSWORD=liftcrew
     ports:
       - '5432:5432'
 

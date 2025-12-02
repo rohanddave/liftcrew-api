@@ -14,10 +14,10 @@ async function bootstrap() {
   );
 
   const config = new DocumentBuilder()
-    .setTitle('OnePrediction')
-    .setDescription('The OnePrediction API')
+    .setTitle('LiftCrew')
+    .setDescription('LiftCrew API documentation')
     .setVersion('1.0')
-    .addTag('OP')
+    .addTag('LiftCrew')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);

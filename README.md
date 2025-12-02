@@ -1,100 +1,86 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
+# LiftCrew API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
-
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
-
-## Description
-
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Installation
-
-```bash
-$ npm install
-```
-
-## Running the app
-
-```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
-```
-
-## Test
-
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
-```
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](LICENSE).
+NestJS backend API with Fastify, TypeORM, PostgreSQL, and Redis.
 
 ## Features
 
-- TypeORM
-- Postgres
-- Redis Cache
-- SWC
-- Docker Setup
+- NestJS with Fastify adapter
+- TypeORM with PostgreSQL
+- Redis caching
+- Docker support (dev & production)
+- Swagger API documentation
 
 ## Environment Variables
 
-To run this project, you will need to add the following environment variables to your .env file
+Create a `.env` file with the following variables:
 
-`DATABASE_HOST`
-`DATABASE_PORT`
-`DATABASE_USER`
-`DATABASE_PASSWORD`
-`DATABASE_NAME`
-`DATABASE_NAME`
-`MODE`
-`RUN_MIGRATIONS`
-`REDIS_HOST`
-`REDIS_PORT`
+```
+DATABASE_HOST=
+DATABASE_PORT=
+DATABASE_USER=
+DATABASE_PASSWORD=
+DATABASE_NAME=
+MODE=
+RUN_MIGRATIONS=
+REDIS_HOST=
+REDIS_PORT=
+```
 
-## Authors
+## Local Development
+
+```bash
+# Install dependencies
+npm install
+
+# Run in development mode
+npm run start:dev
+
+# Run in watch mode
+npm run start:dev
+
+# Build the application
+npm run build
+
+# Run in production mode
+npm run start:prod
+```
+
+## Docker Commands
+
+### Development Mode
+```bash
+# Build development image
+docker build --target development -t liftcrew-api:dev .
+
+# Run development container
+docker run -p 3000:3000 -v $(pwd):/usr/src/app liftcrew-api:dev
+
+# Or use docker-compose
+docker-compose up
+```
+
+### Production Mode
+```bash
+# Build production image
+docker build --target production -t liftcrew-api:prod .
+
+# Run production container
+docker run -p 3000:3000 liftcrew-api:prod
+```
+
+## Testing
+
+```bash
+# Unit tests
+npm run test
+
+# E2E tests
+npm run test:e2e
+
+# Test coverage
+npm run test:cov
+```
+
+## Author
 
 - [@rohanddave](https://github.com/rohanddave)
