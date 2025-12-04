@@ -23,8 +23,11 @@ export class User {
   /**
    * Unique email address of the user.
    */
-  @Column({ unique: true })
-  email: string;
+  @Column({ unique: true, nullable: true })
+  email: string | null;
+
+  @Column({ unique: true, nullable: true })
+  phoneNumber: string | null;
 
   /**
    * Full name of the user.
@@ -32,17 +35,27 @@ export class User {
   @Column()
   name: string;
 
+  /**
+   * User's height in centimeters.
+   */
   @Column()
   height: number;
 
+  /**
+   * User's weight in kilograms.
+   */
   @Column()
   weight: number;
 
-  @Column()
-  age: number;
+  /**
+   * User's date of birth.
+   * Stored as a Date to calculate age dynamically.
+   */
+  @Column({ type: 'date' })
+  birthdate: Date;
 
   /**
-   * URL to the user’s profile image.
+   * URL to the user's profile image.
    */
   @Column({ nullable: true })
   imageUrl?: string;
@@ -61,4 +74,25 @@ export class User {
 
   @Column({ nullable: true })
   homeGymId: string;
+
+  /**
+   * Calculated age based on birthdate.
+   * Returns the user's current age in years.
+   */
+  get age(): number {
+    const today = new Date();
+    const birthDate = new Date(this.birthdate);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+
+    // Adjust age if birthday hasn't occurred yet this year
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birthDate.getDate())
+    ) {
+      age--;
+    }
+
+    return age;
+  }
 }

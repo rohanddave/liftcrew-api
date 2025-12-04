@@ -1,4 +1,11 @@
-import { IsEmail, IsNotEmpty, IsNumber, IsOptional, IsString, IsUrl } from 'class-validator';
+import {
+  IsDateString,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUrl,
+} from 'class-validator';
 
 /**
  * Data Transfer Object for creating a new user.
@@ -14,22 +21,27 @@ export class CreateUserDto {
   @IsString()
   username: string;
 
-  /**
-   * User's email address.
-   * Must be a valid email format and unique across the platform.
-   * @example "john.doe@example.com"
-   */
-  @IsNotEmpty()
-  @IsEmail()
-  email: string;
+  // /**
+  //  * User's email address.
+  //  * Must be a valid email format and unique across the platform.
+  //  * @example "john.doe@example.com"
+  //  */
+  // @IsOptional()
+  // @IsEmail()
+  // email: string | null;
 
-  /**
-   * Full name of the user.
-   * @example "John Doe"
-   */
-  @IsNotEmpty()
-  @IsString()
-  name: string;
+  // @IsOptional()
+  // @IsString()
+  // @IsPhoneNumber()
+  // phoneNumber: string | null;
+
+  // /**
+  //  * Full name of the user.
+  //  * @example "John Doe"
+  //  */
+  // @IsNotEmpty()
+  // @IsString()
+  // name: string;
 
   /**
    * User's height in centimeters.
@@ -48,12 +60,14 @@ export class CreateUserDto {
   weight: number;
 
   /**
-   * User's age in years.
-   * @example 25
+   * User's date of birth.
+   * Must be in ISO 8601 date format (YYYY-MM-DD).
+   * Age will be calculated automatically from this value.
+   * @example "1998-05-15"
    */
   @IsNotEmpty()
-  @IsNumber()
-  age: number;
+  @IsDateString()
+  birthdate: string;
 
   /**
    * URL to the user's profile image.

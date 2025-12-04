@@ -50,8 +50,16 @@ export class UsersController {
    * @returns Promise<User> The newly created user entity
    */
   @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
+  create(
+    @Req() request: RequestWithUser,
+    @Body() createUserDto: CreateUserDto,
+  ) {
+    const { email, phoneNumber, name } = request.user;
+    return this.usersService.create(createUserDto, {
+      email,
+      phoneNumber,
+      name,
+    });
   }
 
   /**
@@ -63,7 +71,10 @@ export class UsersController {
    * @throws NotFoundException if the user is not found
    */
   @Put()
-  update(@Req() request: RequestWithUser, @Body() updateUserDto: UpdateUserDto) {
+  update(
+    @Req() request: RequestWithUser,
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
     return this.usersService.update(request.user.id, updateUserDto);
   }
 

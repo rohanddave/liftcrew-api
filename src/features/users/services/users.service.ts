@@ -52,7 +52,20 @@ export class UsersService {
    * @param createUserDto - The data transfer object containing user information
    * @returns Promise<User> The newly created and saved user entity
    */
-  async create(createUserDto: CreateUserDto): Promise<User> {
+  async create(
+    createUserDto: CreateUserDto,
+    requiredUserFields: {
+      email?: string | null;
+      phoneNumber?: string | null;
+      name: string;
+    },
+  ): Promise<User> {
+    if (!!requiredUserFields.email && !requiredUserFields.phoneNumber) {
+      throw new NotFoundException(
+        'Either email or phone number must be provided',
+      );
+    }
+
     // Create a new user entity from the DTO
     const user = this.userRepository.create(createUserDto);
     // Persist the user to the database
