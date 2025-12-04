@@ -20,13 +20,19 @@
 									"// Parse the response body",
 									"const responseJson = pm.response.json();",
 									"",
-									"// Check if accessToken exists in the response",
-									"if (responseJson.accessToken) {",
-									"    // Set the accessToken as an environment variable",
-									"    pm.environment.set(\"jwt_token\", responseJson.accessToken);",
-									"    console.log(\"Access token has been saved to jwt_token variable\");",
+									"// Check if access_token exists in the response",
+									"if (responseJson.access_token) {",
+									"    // Set the access_token as the jwt_token environment variable",
+									"    pm.environment.set(\"jwt_token\", responseJson.access_token);",
+									"    console.log(\"Access token has been saved to jwt_token variable:\", responseJson.access_token.substring(0, 20) + \"...\");",
+									"",
+									"    // Also save the refresh_token if present",
+									"    if (responseJson.refresh_token) {",
+									"        pm.environment.set(\"refresh_token\", responseJson.refresh_token);",
+									"        console.log(\"Refresh token has been saved to refresh_token variable\");",
+									"    }",
 									"} else {",
-									"    console.log(\"No accessToken found in response\");",
+									"    console.log(\"No access_token found in response\");",
 									"}"
 								],
 								"type": "text/javascript",
@@ -83,7 +89,46 @@
 				},
 				{
 					"name": "Refresh Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Parse the response body",
+									"const responseJson = pm.response.json();",
+									"",
+									"// Check if access_token exists in the response",
+									"if (responseJson.access_token) {",
+									"    // Update the access_token in environment",
+									"    pm.environment.set(\"jwt_token\", responseJson.access_token);",
+									"    console.log(\"New access token has been saved to jwt_token variable\");",
+									"",
+									"    // The refresh_token should be the same as before",
+									"    if (responseJson.refresh_token) {",
+									"        pm.environment.set(\"refresh_token\", responseJson.refresh_token);",
+									"        console.log(\"Refresh token confirmed (unchanged)\");",
+									"    }",
+									"} else {",
+									"    console.log(\"No access_token found in response\");",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
 					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{refresh_token}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "POST",
 						"header": [],
 						"url": {
@@ -96,7 +141,7 @@
 								"refresh"
 							]
 						},
-						"description": "Refreshes the JWT access token using the current token"
+						"description": "Refreshes the JWT access token using the refresh token. Returns a new access token and the same refresh token. The new access token is automatically saved."
 					},
 					"response": []
 				},
