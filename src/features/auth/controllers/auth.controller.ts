@@ -15,12 +15,6 @@ export class AuthController {
     private readonly tokenService: TokenService,
   ) {}
 
-  @Post('login')
-  // TODO: replace any with correct type of credentials
-  login(@Body() credentials: any) {
-    return this.authService.login(credentials);
-  }
-
   @Post('refresh')
   refreshToken(@Req() req: RequestWithToken) {
     return this.tokenService.refreshToken(req.token);

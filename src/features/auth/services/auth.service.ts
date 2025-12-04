@@ -8,11 +8,4 @@ export class AuthService {
   logout(user: User) {
     // Implement logout logic if needed (e.g., token revocation)
   }
-
-  login(credentials: any) {
-    return {
-      access_token: 'mock-jwt-token',
-      user: { id: '1', email: credentials.email },
-    };
-  }
 }
