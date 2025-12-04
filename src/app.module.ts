@@ -10,6 +10,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './features/users/users.module';
 import { APP_GUARD } from '@nestjs/core';
 import { JWTTokenGuard } from './features/auth/guards/jwt-token.guard';
+import { SocialModule } from './features/social/social.module';
 
 @Module({
   imports: [
@@ -35,11 +36,11 @@ import { JWTTokenGuard } from './features/auth/guards/jwt-token.guard';
       }),
       inject: [ConfigService],
     }),
-    Neo4jModule,
     FirebaseModule,
     AuthModule,
     UsersModule,
     GymsModule,
+    SocialModule.register({ type: 'graph' }),
   ],
   controllers: [],
   providers: [
