@@ -14,6 +14,7 @@ export class SocialTokenGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    console.log('SocialTokenGuard: canActivate called');
     const request = context.switchToHttp().getRequest();
     const authorization = request.headers.authorization;
 

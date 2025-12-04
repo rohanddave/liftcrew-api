@@ -1,0 +1,427 @@
+{
+	"info": {
+		"_postman_id": "637b916e-f32c-469d-81ac-efc270e919d4",
+		"name": "LiftCrew API",
+		"description": "Complete API collection for LiftCrew application including Users and Gyms endpoints",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "15333074"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Exchange Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Parse the response body",
+									"const responseJson = pm.response.json();",
+									"",
+									"// Check if accessToken exists in the response",
+									"if (responseJson.accessToken) {",
+									"    // Set the accessToken as an environment variable",
+									"    pm.environment.set(\"jwt_token\", responseJson.accessToken);",
+									"    console.log(\"Access token has been saved to jwt_token variable\");",
+									"} else {",
+									"    console.log(\"No accessToken found in response\");",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{githubToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{firebase_token}}",
+								"description": "Firebase ID token"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/exchange",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"exchange"
+							]
+						},
+						"description": "Exchanges a Firebase ID token for an application JWT token. The access token is automatically saved to the jwt_token environment variable."
+					},
+					"response": []
+				},
+				{
+					"name": "Refresh Token",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/auth/refresh",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"refresh"
+							]
+						},
+						"description": "Refreshes the JWT access token using the current token"
+					},
+					"response": []
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/auth/logout",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"logout"
+							]
+						},
+						"description": "Logs out the authenticated user"
+					},
+					"response": []
+				}
+			],
+			"description": "Authentication endpoints for token exchange, refresh, and logout"
+		},
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "Get Current User (Me)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/users/me",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"users",
+								"me"
+							]
+						},
+						"description": "Retrieves the currently authenticated user's profile"
+					},
+					"response": []
+				},
+				{
+					"name": "Get User by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/users/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"users",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "550e8400-e29b-41d4-a716-446655440000",
+									"description": "User UUID"
+								}
+							]
+						},
+						"description": "Retrieves a single user by their UUID"
+					},
+					"response": []
+				},
+				{
+					"name": "Create User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"john_doe\",\n  \"height\": 175,\n  \"weight\": 70,\n  \"birthdate\": \"1998-05-15\",\n  \"imageUrl\": \"https://example.com/profile/john.jpg\",\n  \"homeGymId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/users",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"users"
+							]
+						},
+						"description": "Creates a new user in the database"
+					},
+					"response": []
+				},
+				{
+					"name": "Update User",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"John Updated Doe\",\n  \"height\": 180,\n  \"weight\": 75,\n  \"birthdate\": \"1998-03-20\",\n  \"imageUrl\": \"https://example.com/profile/john_new.jpg\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/users",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"users"
+							]
+						},
+						"description": "Updates the authenticated user's profile information"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete User",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/users",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"users"
+							]
+						},
+						"description": "Deletes the authenticated user's account"
+					},
+					"response": []
+				}
+			],
+			"description": "User management endpoints"
+		},
+		{
+			"name": "Gyms",
+			"item": [
+				{
+					"name": "Get All Gyms",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/gyms",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"gyms"
+							]
+						},
+						"description": "Retrieves all gyms from the database"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Gym by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/gyms/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"gyms",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "550e8400-e29b-41d4-a716-446655440000",
+									"description": "Gym UUID"
+								}
+							]
+						},
+						"description": "Retrieves a single gym by its UUID"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Gym",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Gold's Gym Downtown\",\n  \"address\": \"123 Main St, New York, NY 10001\",\n  \"lat\": 40.7128,\n  \"lng\": -74.0060\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/gyms",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"gyms"
+							]
+						},
+						"description": "Creates a new gym in the database"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Gym",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Gold's Gym Downtown Updated\",\n  \"address\": \"456 Broadway, New York, NY 10001\",\n  \"lat\": 40.7150,\n  \"lng\": -74.0070\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/gyms/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"gyms",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "550e8400-e29b-41d4-a716-446655440000",
+									"description": "Gym UUID"
+								}
+							]
+						},
+						"description": "Updates an existing gym's information"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Gym",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/gyms/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"gyms",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "550e8400-e29b-41d4-a716-446655440000",
+									"description": "Gym UUID"
+								}
+							]
+						},
+						"description": "Deletes a gym from the database"
+					},
+					"response": []
+				}
+			],
+			"description": "Gym management endpoints"
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{jwt_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "{{base_url}}"
+		}
+	]
+}
