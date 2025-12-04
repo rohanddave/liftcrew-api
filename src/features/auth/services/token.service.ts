@@ -6,7 +6,6 @@ import * as jwt from 'jsonwebtoken';
 import { Repository } from 'typeorm';
 import { RefreshToken } from '../entities/refresh-tokens.entity';
 import { createHash } from 'crypto';
-import { FirebaseDecodedToken } from 'src/infra/firebase/types';
 import { UsersService } from 'src/features/users/services/users.service';
 
 interface TokenPayload {
@@ -17,7 +16,7 @@ interface TokenPayload {
 }
 
 interface RefreshTokenPayload {
-  id: string;
+  email: string;
 }
 
 @Injectable()
@@ -106,10 +105,12 @@ export class TokenService {
 
     // Store the hashed token in the database
     const refreshTokenEntity = this.refreshTokenRepository.create({
-      userId: payload.id,
+      email: payload.email,
       tokenHash,
       expiresAt,
     });
+
+    console.log('Storing Refresh Token Entity:', refreshTokenEntity);
 
     await this.refreshTokenRepository.save(refreshTokenEntity);
 
@@ -146,6 +147,8 @@ export class TokenService {
     const decodedToken =
       await this.firebaseAuthService.verifyIdToken(firebaseToken);
 
+    console.log('Decoded Firebase Token:', decodedToken);
+
     // Extract user information from the decoded token
     const payload = this.validateAndGenerateAccessTokenPayload({
       uid: decodedToken.uid,
@@ -154,15 +157,23 @@ export class TokenService {
       name: decodedToken.name || '',
     });
 
+    console.log('Generated Payload for JWT:', payload);
+
     // Generate application-specific JWT token
     const appToken = this.generateAccessToken(payload);
 
+    console.log('Generated App JWT Token:', appToken);
+
     // Generate and store refresh token
     const refreshPayload: RefreshTokenPayload = {
-      id: decodedToken.uid,
+      email: decodedToken.email || '',
     };
 
+    console.log('Generating Refresh Token with Payload:', refreshPayload);
+
     const refreshToken = await this.generateRefreshToken(refreshPayload);
+
+    console.log('Generated Refresh Token:', refreshToken);
 
     return {
       access_token: appToken,
@@ -194,7 +205,7 @@ export class TokenService {
       // Find the refresh token in the database
       const storedToken = await this.refreshTokenRepository.findOne({
         where: {
-          userId: decoded.id,
+          email: decoded.email,
           tokenHash,
         },
       });
@@ -212,7 +223,7 @@ export class TokenService {
       }
 
       // Generate new access token with user information
-      const user = await this.usersService.findOneOrFail(decoded.id);
+      const user = await this.usersService.findOneByEmailOrFail(decoded.email);
       const payload = this.validateAndGenerateAccessTokenPayload({
         uid: user.id,
         email: user.email,

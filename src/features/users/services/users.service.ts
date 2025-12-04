@@ -31,8 +31,34 @@ export class UsersService {
    * @returns Promise<User> The user entity
    * @throws EntityNotFoundError if no user exists with the given ID
    */
+  async findOneByEmailOrFail(email: string): Promise<User> {
+    const user = await this.userRepository.findOneByOrFail({ email });
+    return user;
+  }
+
+  /**
+   * Finds a single user by their unique identifier.
+   * Throws an exception if the user is not found.
+   * @param id - The UUID of the user to find
+   * @returns Promise<User> The user entity
+   * @throws EntityNotFoundError if no user exists with the given ID
+   */
   async findOneOrFail(id: string): Promise<User> {
     const user = await this.userRepository.findOneByOrFail({ id });
+    return user;
+  }
+
+  /**
+   * Finds a single user by their unique identifier.
+   * Throws an exception if the user is not found.
+   * @param id - The UUID of the user to find
+   * @returns Promise<User> The user entity
+   * @throws EntityNotFoundError if no user exists with the given ID
+   */
+  async findOneByEmail(email: string): Promise<User | null> {
+    console.log('Finding user by email:', email);
+    const user = await this.userRepository.findOneBy({ email });
+    console.log('Found user:', user);
     return user;
   }
 

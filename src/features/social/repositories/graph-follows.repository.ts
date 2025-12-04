@@ -13,6 +13,36 @@ import { Injectable } from '@nestjs/common';
 @Injectable()
 export class GraphFollowsRepository implements FollowsRepository {
   constructor(private neo4jService: Neo4jService) {}
+  updateCloseFriendStatus(
+    followerId: string,
+    followingId: string,
+    isCloseFriend: boolean,
+  ): Promise<void> {
+    throw new Error('Method not implemented.');
+  }
+  exists(followerId: string, followingId: string): Promise<boolean> {
+    throw new Error('Method not implemented.');
+  }
+  findOne(followerId: string, followingId: string): Promise<any | null> {
+    throw new Error('Method not implemented.');
+  }
+  findFollowers(userId: string): Promise<any[]> {
+    throw new Error('Method not implemented.');
+  }
+  findFollowing(userId: string): Promise<any[]> {
+    throw new Error('Method not implemented.');
+  }
+  findMutualFollows(userId: string): Promise<any[]> {
+    throw new Error('Method not implemented.');
+  }
+  getStats(
+    userId: string,
+  ): Promise<{ followerCount: number; followingCount: number }> {
+    throw new Error('Method not implemented.');
+  }
+  deleteAllForUser(userId: string): Promise<void> {
+    throw new Error('Method not implemented.');
+  }
 
   /**
    * Creates a follow relationship between two users in Neo4j.
@@ -52,43 +82,5 @@ export class GraphFollowsRepository implements FollowsRepository {
       followerId,
       followingId,
     });
-  }
-
-  /**
-   * Updates the close friend status on a follow relationship.
-   * Note: This adds/removes an isCloseFriend property on the relationship.
-   *
-   * @param followerId - ID of the user who is following
-   * @paramented.');
-  }
-  updateCloseFriendStatus(
-    followerId: string,
-    followingId: string,
-    isCloseFriend: boolean,
-  ): Promise<void> {
-    throw new Error('Method not implemented.');
-  }
-  exists(followerId: string, followingId: string): Promise<boolean> {
-    throw new Error('Method not implemented.');
-  }
-  findOne(followerId: string, followingId: string): Promise<any | null> {
-    throw new Error('Method not implemented.');
-  }
-  findFollowers(userId: string): Promise<any[]> {
-    throw new Error('Method not implemented.');
-  }
-  findFollowing(userId: string): Promise<any[]> {
-    throw new Error('Method not implemented.');
-  }
-  findMutualFollows(userId: string): Promise<any[]> {
-    throw new Error('Method not implemented.');
-  }
-  getStats(
-    userId: string,
-  ): Promise<{ followerCount: number; followingCount: number }> {
-    throw new Error('Method not implemented.');
-  }
-  deleteAllForUser(userId: string): Promise<void> {
-    throw new Error('Method not implemented.');
   }
 }

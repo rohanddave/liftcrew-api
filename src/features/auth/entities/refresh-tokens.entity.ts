@@ -5,6 +5,7 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 
 /**
@@ -22,19 +23,13 @@ export class RefreshToken {
   id: string;
 
   /**
-   * ID of the user this refresh token belongs to.
-   * Foreign key to the users table.
+   * Email links the token to either:
+   * - An existing user (via user.email)
+   * - A pending user (before registration completes)
    */
+  @Index()
   @Column()
-  userId: string;
-
-  /**
-   * Relationship to the User entity.
-   * Automatically deletes refresh tokens when the user is deleted.
-   */
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'userId' })
-  user: User;
+  email: string;
 
   /**
    * SHA-256 hash of the refresh token.

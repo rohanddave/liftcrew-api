@@ -1,4 +1,4 @@
-import { Controller, Post, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, UseGuards, Req, Get } from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
 import { SocialTokenGuard } from 'src/features/auth/guards/social-token.guard';
 import { RefreshTokenGuard } from 'src/features/auth/guards/refresh-token.guard';
@@ -8,6 +8,7 @@ import {
 } from 'src/common/types/request.type';
 import { TokenService } from '../services/token.service';
 import { Public } from 'src/common/decorators';
+import { UsersService } from 'src/features/users/services/users.service';
 
 /**
  * Controller for authentication-related operations.
@@ -18,7 +19,17 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly tokenService: TokenService,
+    private readonly usersService: UsersService,
   ) {}
+
+  @Get('login')
+  async login(@Req() req: RequestWithUser) {
+    console.log('Login Request User:', req.user);
+    const user = await this.usersService.findOneByEmail(req.user.email);
+    const response = { isNewUser: !user };
+    console.log('Login Response:', response);
+    return response;
+  }
 
   /**
    * Refreshes an access token using a valid refresh token.
@@ -44,7 +55,9 @@ export class AuthController {
   @Post('exchange')
   @UseGuards(SocialTokenGuard)
   async exchangeToken(@Req() req: RequestWithToken) {
-    return this.tokenService.exchangeFirebaseToken(req.token);
+    const response = await this.tokenService.exchangeFirebaseToken(req.token);
+    console.log('Exchange Token Response:', response);
+    return response;
   }
 
   /**
@@ -59,4 +72,3 @@ export class AuthController {
     return this.authService.logout(user);
   }
 }
-

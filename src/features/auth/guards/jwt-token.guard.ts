@@ -115,12 +115,10 @@ export class JWTTokenGuard implements CanActivate {
 
       // Optionally decode and attach the payload to request
       const decoded = await this.jwtTokenValidation.validateAndDecode(token);
+      console.log('Decoded JWT Payload:', decoded);
       if (decoded) {
         request.user = decoded;
       }
-
-      // Attach the token to the request object for use in controllers
-      request.token = token;
 
       // Return true to allow the request to proceed
       return true;
