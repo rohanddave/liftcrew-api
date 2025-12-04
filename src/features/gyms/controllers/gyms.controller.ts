@@ -6,8 +6,12 @@ import {
   Delete,
   Body,
   Param,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { GymsService } from '../services/gyms.service';
+import { CreateGymDto } from '../dto/create-gym.dto';
+import { UpdateGymDto } from '../dto/update-gym.dto';
 
 @Controller('gyms')
 export class GymsController {
@@ -24,16 +28,17 @@ export class GymsController {
   }
 
   @Post()
-  create(@Body() createGymDto: any) {
+  create(@Body() createGymDto: CreateGymDto) {
     return this.gymsService.create(createGymDto);
   }
 
   @Put(':id')
-  update(@Param('id') id: string, @Body() updateGymDto: any) {
+  update(@Param('id') id: string, @Body() updateGymDto: UpdateGymDto) {
     return this.gymsService.update(id, updateGymDto);
   }
 
   @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id') id: string) {
     return this.gymsService.remove(id);
   }

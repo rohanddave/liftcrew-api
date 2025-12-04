@@ -1,5 +1,13 @@
 import { Gym } from 'src/features/gyms/entities/gym.entity';
-import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  JoinTable,
+  ManyToMany,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity('users')
 export class User {
@@ -23,6 +31,15 @@ export class User {
    */
   @Column()
   name: string;
+
+  @Column()
+  height: number;
+
+  @Column()
+  weight: number;
+
+  @Column()
+  age: number;
 
   /**
    * URL to the user’s profile image.

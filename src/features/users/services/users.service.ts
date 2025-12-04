@@ -1,24 +1,44 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { User } from '../entities/user.entity';
+import { CreateUserDto } from '../dto/create-user.dto';
+import { UpdateUserDto } from '../dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
-  findAll() {
-    return [];
+  constructor(
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+  ) {}
+
+  async findAll(): Promise<User[]> {
+    return await this.userRepository.find();
   }
 
-  findOne(id: string) {
-    return { id, name: 'User' };
+  async findOneOrFail(id: string): Promise<User> {
+    const user = await this.userRepository.findOneByOrFail({ id });
+    return user;
   }
 
-  create(createUserDto: any) {
-    return { id: '1', ...createUserDto };
+  async findOne(id: string): Promise<User | null> {
+    const user = await this.userRepository.findOneBy({ id });
+    return user;
   }
 
-  update(id: string, updateUserDto: any) {
-    return { id, ...updateUserDto };
+  async create(createUserDto: CreateUserDto): Promise<User> {
+    const user = this.userRepository.create(createUserDto);
+    return await this.userRepository.save(user);
   }
 
-  remove(id: string) {
-    return { id, deleted: true };
+  async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
+    const user = await this.findOneOrFail(id);
+    Object.assign(user, updateUserDto);
+    return await this.userRepository.save(user);
+  }
+
+  async remove(id: string): Promise<void> {
+    const user = await this.findOneOrFail(id);
+    await this.userRepository.remove(user);
   }
 }
