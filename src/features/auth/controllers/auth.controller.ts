@@ -36,6 +36,6 @@ export class AuthController {
   @Post('logout')
   logout(@Req() req: RequestWithUser) {
     const { user } = req;
-    return this.authService.login(user);
+    return this.authService.logout(user);
   }
 }
