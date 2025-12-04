@@ -41,13 +41,10 @@ export class RefreshTokenGuard implements CanActivate {
       const token = getBearerToken(authorization);
 
       // Verify the refresh token with expected issuer and audience
-      const decoded = jwt.verify(token, this.refreshSecret, {
+      jwt.verify(token, this.refreshSecret, {
         issuer: this.issuer,
         audience: this.audience,
       });
-
-      // Attach the decoded payload to the request object
-      request.user = decoded;
 
       // Attach the token to the request object for use in the controller
       request.token = token;
@@ -63,9 +60,7 @@ export class RefreshTokenGuard implements CanActivate {
       }
 
       // Generic error handling
-      throw new UnauthorizedException(
-        error.message || 'Invalid refresh token',
-      );
+      throw new UnauthorizedException(error.message || 'Invalid refresh token');
     }
   }
 }

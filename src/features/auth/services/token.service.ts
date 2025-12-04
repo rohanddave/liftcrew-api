@@ -1,19 +1,19 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { InjectRepository } from '@nestjs/typeorm';
 import { FirebaseAuthService } from '../../../infra/firebase/services/firebase-auth.service';
 import * as jwt from 'jsonwebtoken';
 import { Repository } from 'typeorm';
 import { RefreshToken } from '../entities/refresh-tokens.entity';
 import { createHash } from 'crypto';
+import { FirebaseDecodedToken } from 'src/infra/firebase/types';
+import { UsersService } from 'src/features/users/services/users.service';
 
 interface TokenPayload {
   id: string;
   email?: string;
   phoneNumber?: string;
   name?: string;
-  picture?: string;
-  provider?: string;
-  emailVerified?: boolean;
 }
 
 interface RefreshTokenPayload {
@@ -32,8 +32,10 @@ export class TokenService {
 
   constructor(
     private readonly firebaseAuthService: FirebaseAuthService,
-    private readonly refreshTokenRepository: Repository<RefreshToken>,
     private readonly configService: ConfigService,
+    private readonly usersService: UsersService,
+    @InjectRepository(RefreshToken)
+    private readonly refreshTokenRepository: Repository<RefreshToken>,
   ) {
     const secret = this.configService.get<string>('JWT_SECRET');
     if (!secret) {
@@ -114,6 +116,24 @@ export class TokenService {
     return refreshToken;
   }
 
+  private validateAndGenerateAccessTokenPayload(decoded: {
+    uid: string;
+    email?: string;
+    phone_number?: string;
+    name: string;
+  }): TokenPayload {
+    if (!decoded.uid || (!decoded.email && !decoded.phone_number)) {
+      throw new UnauthorizedException('Invalid Firebase token payload');
+    }
+
+    return {
+      id: decoded.uid,
+      email: decoded.email,
+      phoneNumber: decoded.phone_number,
+      name: decoded.name,
+    };
+  }
+
   /**
    * Exchanges a Firebase ID token for application JWT tokens.
    * @param firebaseToken - The Firebase ID token to exchange
@@ -127,15 +147,12 @@ export class TokenService {
       await this.firebaseAuthService.verifyIdToken(firebaseToken);
 
     // Extract user information from the decoded token
-    const payload: TokenPayload = {
-      id: decodedToken.uid,
+    const payload = this.validateAndGenerateAccessTokenPayload({
+      uid: decodedToken.uid,
       email: decodedToken.email,
-      phoneNumber: decodedToken.phone_number,
-      name: decodedToken.name,
-      picture: decodedToken.picture,
-      provider: decodedToken.firebase?.sign_in_provider,
-      emailVerified: decodedToken.email_verified,
-    };
+      phone_number: decodedToken.phone_number,
+      name: decodedToken.name || '',
+    });
 
     // Generate application-specific JWT token
     const appToken = this.generateAccessToken(payload);
@@ -161,7 +178,9 @@ export class TokenService {
    * @returns Promise containing the new access_token
    * @throws UnauthorizedException if token is invalid, expired, or not found
    */
-  async refreshToken(refreshToken: string): Promise<{ access_token: string }> {
+  async refreshToken(
+    refreshToken: string,
+  ): Promise<{ access_token: string; refresh_token: string }> {
     try {
       // Verify the refresh token signature and expiration
       const decoded = jwt.verify(refreshToken, this.refreshSecret, {
@@ -193,15 +212,19 @@ export class TokenService {
       }
 
       // Generate new access token with user information
-      // Note: In a production system, you might want to fetch fresh user data here
-      const payload: TokenPayload = {
-        id: decoded.id,
-      };
+      const user = await this.usersService.findOneOrFail(decoded.id);
+      const payload = this.validateAndGenerateAccessTokenPayload({
+        uid: user.id,
+        email: user.email,
+        phone_number: user.phoneNumber,
+        name: user.name,
+      });
 
       const newAccessToken = this.generateAccessToken(payload);
 
       return {
         access_token: newAccessToken,
+        refresh_token: refreshToken,
       };
     } catch (error) {
       if (error instanceof jwt.JsonWebTokenError) {

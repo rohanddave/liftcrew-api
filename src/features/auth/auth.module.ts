@@ -7,12 +7,14 @@ import { JWTTokenGuard, JWTTokenValidation } from './guards/jwt-token.guard';
 import { TokenService } from './services/token.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RefreshToken } from './entities/refresh-tokens.entity';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
     ConfigModule,
     FirebaseModule,
     TypeOrmModule.forFeature([RefreshToken]),
+    UsersModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, TokenService, JWTTokenGuard, JWTTokenValidation],
