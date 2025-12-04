@@ -9,6 +9,24 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { RefreshToken } from './entities/refresh-tokens.entity';
 import { UsersModule } from '../users/users.module';
 
+/**
+ * Authentication Module
+ *
+ * Handles all authentication-related functionality including:
+ * - Firebase token exchange for application JWT tokens
+ * - Access token and refresh token generation
+ * - Token refresh mechanism
+ * - User logout
+ *
+ * Exports:
+ * - JWTTokenGuard: Global guard for protecting routes with JWT authentication
+ *
+ * Dependencies:
+ * - ConfigModule: For environment configuration
+ * - FirebaseModule: For Firebase authentication integration
+ * - UsersModule: For user data access
+ * - TypeORM: For refresh token persistence
+ */
 @Module({
   imports: [
     ConfigModule,

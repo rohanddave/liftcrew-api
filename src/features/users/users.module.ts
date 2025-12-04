@@ -4,6 +4,18 @@ import { UsersService } from './services/users.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 
+/**
+ * Users Module
+ *
+ * Handles all user-related functionality including:
+ * - User profile management (CRUD operations)
+ * - User authentication data (via Auth module)
+ * - User-gym relationships (memberships, home gym)
+ * - User physical metrics (height, weight, age calculated from birthdate)
+ *
+ * Exports:
+ * - UsersService: For use in other modules that need user data access (e.g., AuthModule)
+ */
 @Module({
   imports: [TypeOrmModule.forFeature([User])],
   controllers: [UsersController],
