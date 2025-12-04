@@ -5,6 +5,10 @@ import { User } from '../entities/user.entity';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 
+/**
+ * Service responsible for managing user business logic and database operations.
+ * Uses TypeORM repository pattern for data persistence.
+ */
 @Injectable()
 export class UsersService {
   constructor(
@@ -12,33 +16,75 @@ export class UsersService {
     private readonly userRepository: Repository<User>,
   ) {}
 
+  /**
+   * Retrieves all users from the database.
+   * @returns Promise<User[]> Array of all user entities
+   */
   async findAll(): Promise<User[]> {
     return await this.userRepository.find();
   }
 
+  /**
+   * Finds a single user by their unique identifier.
+   * Throws an exception if the user is not found.
+   * @param id - The UUID of the user to find
+   * @returns Promise<User> The user entity
+   * @throws EntityNotFoundError if no user exists with the given ID
+   */
   async findOneOrFail(id: string): Promise<User> {
     const user = await this.userRepository.findOneByOrFail({ id });
     return user;
   }
 
+  /**
+   * Finds a single user by their unique identifier.
+   * Returns null if the user is not found.
+   * @param id - The UUID of the user to find
+   * @returns Promise<User | null> The user entity if found, null otherwise
+   */
   async findOne(id: string): Promise<User | null> {
     const user = await this.userRepository.findOneBy({ id });
     return user;
   }
 
+  /**
+   * Creates a new user in the database.
+   * @param createUserDto - The data transfer object containing user information
+   * @returns Promise<User> The newly created and saved user entity
+   */
   async create(createUserDto: CreateUserDto): Promise<User> {
+    // Create a new user entity from the DTO
     const user = this.userRepository.create(createUserDto);
+    // Persist the user to the database
     return await this.userRepository.save(user);
   }
 
+  /**
+   * Updates an existing user's information.
+   * @param id - The UUID of the user to update
+   * @param updateUserDto - The data transfer object containing updated user information
+   * @returns Promise<User> The updated user entity
+   * @throws EntityNotFoundError if no user exists with the given ID
+   */
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
+    // First, verify the user exists (throws EntityNotFoundError if not found)
     const user = await this.findOneOrFail(id);
+    // Merge the updates into the existing user entity
     Object.assign(user, updateUserDto);
+    // Save and return the updated user
     return await this.userRepository.save(user);
   }
 
+  /**
+   * Removes a user from the database.
+   * @param id - The UUID of the user to remove
+   * @returns Promise<void>
+   * @throws EntityNotFoundError if no user exists with the given ID
+   */
   async remove(id: string): Promise<void> {
+    // First, verify the user exists (throws EntityNotFoundError if not found)
     const user = await this.findOneOrFail(id);
+    // Remove the user from the database
     await this.userRepository.remove(user);
   }
 }
