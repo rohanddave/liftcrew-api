@@ -26,15 +26,24 @@ export class GymsService {
 
   /**
    * Finds a single gym by its unique identifier.
+   * Throws an exception if the gym is not found.
    * @param id - The UUID of the gym to find
-   * @returns Promise<Gym> The gym entity if found
+   * @returns Promise<Gym> The gym entity
    * @throws NotFoundException if no gym exists with the given ID
    */
-  async findOne(id: string): Promise<Gym> {
+  async findOneOrFail(id: string): Promise<Gym> {
+    const gym = await this.gymRepository.findOneByOrFail({ id });
+    return gym;
+  }
+
+  /**
+   * Finds a single gym by its unique identifier.
+   * Returns null if the gym is not found.
+   * @param id - The UUID of the gym to find
+   * @returns Promise<Gym | null> The gym entity if found, null otherwise
+   */
+  async findOne(id: string): Promise<Gym | null> {
     const gym = await this.gymRepository.findOne({ where: { id } });
-    if (!gym) {
-      throw new NotFoundException(`Gym with ID ${id} not found`);
-    }
     return gym;
   }
 
@@ -59,7 +68,7 @@ export class GymsService {
    */
   async update(id: string, updateGymDto: UpdateGymDto): Promise<Gym> {
     // First, verify the gym exists (throws NotFoundException if not found)
-    const gym = await this.findOne(id);
+    const gym = await this.findOneOrFail(id);
     // Merge the updates into the existing gym entity
     Object.assign(gym, updateGymDto);
     // Save and return the updated gym
@@ -74,7 +83,7 @@ export class GymsService {
    */
   async remove(id: string): Promise<void> {
     // First, verify the gym exists (throws NotFoundException if not found)
-    const gym = await this.findOne(id);
+    const gym = await this.findOneOrFail(id);
     // Remove the gym from the database
     await this.gymRepository.remove(gym);
   }
