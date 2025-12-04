@@ -4,12 +4,14 @@ import {
   ExecutionContext,
   UnauthorizedException,
 } from '@nestjs/common';
-import { getBearerToken } from '../utils/auth.utils';
-import { JWTTokenValidation } from 'src/features/auth/jwt-token-validation.strategy';
+import { FirebaseSocialTokenValidation } from '../../../infra/firebase/firebase-social-token-validation.strategy';
+import { getBearerToken } from 'src/common/utils';
 
 @Injectable()
-export class JWTTokenGuard implements CanActivate {
-  constructor(private readonly jwtTokenValidation: JWTTokenValidation) {}
+export class SocialTokenGuard implements CanActivate {
+  constructor(
+    private readonly firebaseSocialTokenValidation: FirebaseSocialTokenValidation,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
@@ -19,21 +21,15 @@ export class JWTTokenGuard implements CanActivate {
       // Extract the bearer token from authorization header
       const token = getBearerToken(authorization);
 
-      // Validate the JWT token
-      const isValid = await this.jwtTokenValidation.validate(token);
+      // Validate the Firebase token
+      const isValid = await this.firebaseSocialTokenValidation.validate(token);
 
       if (!isValid) {
-        throw new UnauthorizedException('Invalid or expired JWT token');
-      }
-
-      // Optionally decode and attach the payload to request
-      const decoded = await this.jwtTokenValidation.validateAndDecode(token);
-      if (decoded) {
-        request.user = decoded;
+        throw new UnauthorizedException('Invalid or expired Firebase token');
       }
 
       // Attach the token to the request object for use in controllers
-      request.jwtToken = token;
+      request.token = token;
 
       // Return true to allow the request to proceed
       return true;

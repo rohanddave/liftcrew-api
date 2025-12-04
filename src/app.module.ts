@@ -8,6 +8,8 @@ import { Module } from '@nestjs/common';
 import { Neo4jModule } from './infra/neo4j/neo4j.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './features/users/users.module';
+import { APP_GUARD } from '@nestjs/core';
+import { JWTTokenGuard } from './features/auth/guards/jwt-token.guard';
 
 @Module({
   imports: [
@@ -40,6 +42,11 @@ import { UsersModule } from './features/users/users.module';
     GymsModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useExisting: JWTTokenGuard,
+    },
+  ],
 })
 export class AppModule {}

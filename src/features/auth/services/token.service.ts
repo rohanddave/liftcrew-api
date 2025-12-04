@@ -1,24 +1,27 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { FirebaseAuthService } from '../../infra/firebase/firebase-auth.service';
+import { FirebaseAuthService } from '../../../infra/firebase/services/firebase-auth.service';
 import * as jwt from 'jsonwebtoken';
+import { User } from '../../users/entities/user.entity';
 
 @Injectable()
-export class AuthService {
+export class TokenService {
+  private readonly jwtSecret: string;
+  private readonly jwtExpirySeconds: number;
+  private readonly issuer = 'liftcrew-api';
+  private readonly audience = 'liftcrew-app';
   constructor(
     private firebaseAuthService: FirebaseAuthService,
     private configService: ConfigService,
-  ) {}
+  ) {
+    const secret = this.configService.get<string>('JWT_SECRET');
+    if (!secret) {
+      throw new Error('JWT_SECRET is not configured');
+    }
+    this.jwtSecret = secret;
 
-  login(credentials: any) {
-    return {
-      access_token: 'mock-jwt-token',
-      user: { id: '1', email: credentials.email },
-    };
-  }
-
-  validateUser(email: string, password: string) {
-    return { id: '1', email };
+    const expiry = this.configService.get<number>('JWT_EXPIRY_SECONDS', 604800); // Default to 7 days
+    this.jwtExpirySeconds = expiry;
   }
 
   refreshToken(token: string) {
@@ -43,23 +46,17 @@ export class AuthService {
       emailVerified: decodedToken.email_verified,
     };
 
-    // Get JWT secret from environment
-    const jwtSecret = this.configService.get<string>('JWT_SECRET');
-    if (!jwtSecret) {
-      throw new Error('JWT_SECRET is not configured');
-    }
-
     // Generate application-specific JWT token
-    const appToken = jwt.sign(payload, jwtSecret, {
-      expiresIn: '7d', // Token expires in 7 days
-      issuer: 'liftcrew-api',
-      audience: 'liftcrew-app',
+    const appToken = jwt.sign(payload, this.jwtSecret, {
+      expiresIn: this.jwtExpirySeconds,
+      issuer: this.issuer,
+      audience: this.audience,
     });
 
     return {
       access_token: appToken,
       token_type: 'Bearer',
-      expires_in: 604800, // 7 days in seconds
+      expiresIn: this.jwtExpirySeconds,
       user: {
         uid: decodedToken.uid,
         email: decodedToken.email,

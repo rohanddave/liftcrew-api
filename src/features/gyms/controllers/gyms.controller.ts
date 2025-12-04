@@ -7,7 +7,7 @@ import {
   Body,
   Param,
 } from '@nestjs/common';
-import { GymsService } from './gyms.service';
+import { GymsService } from '../services/gyms.service';
 
 @Controller('gyms')
 export class GymsController {
