@@ -30,8 +30,15 @@ export class UsersController {
    * @returns Promise<User | null> The authenticated user's profile
    */
   @Get('me')
-  getMe(@Req() request: RequestWithUser) {
-    return this.usersService.findOne(request.user.id);
+  async getMe(@Req() request: RequestWithUser) {
+    console.log('Authenticated User: ', request.user);
+
+    const user = await this.usersService.findOneByEmailOrFail(
+      request.user.email,
+    );
+
+    console.log('Retrieved User age: ', user.age);
+    return user;
   }
 
   /**
@@ -54,12 +61,14 @@ export class UsersController {
     @Req() request: RequestWithUser,
     @Body() createUserDto: CreateUserDto,
   ) {
+    console.log('CreateUserDto:', createUserDto);
+    console.log('Authenticated User:', request.user);
+
     const { email, phoneNumber, name } = request.user;
-    return this.usersService.create(createUserDto, {
-      email,
-      phoneNumber,
-      name,
-    });
+    const requiredFields = { email, phoneNumber, name };
+    console.log('Required Fields from Authenticated User:', requiredFields);
+
+    return this.usersService.create(createUserDto, requiredFields);
   }
 
   /**

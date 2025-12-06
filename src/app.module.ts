@@ -5,7 +5,6 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { FirebaseModule } from './infra/firebase/firebase.module';
 import { GymsModule } from './features/gyms/gyms.module';
 import { Module } from '@nestjs/common';
-import { Neo4jModule } from './infra/neo4j/neo4j.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './features/users/users.module';
 import { APP_GUARD } from '@nestjs/core';

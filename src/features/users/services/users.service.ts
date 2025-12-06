@@ -86,14 +86,20 @@ export class UsersService {
       name: string;
     },
   ): Promise<User> {
-    if (!!requiredUserFields.email && !requiredUserFields.phoneNumber) {
+    if (!requiredUserFields.email && !requiredUserFields.phoneNumber) {
       throw new NotFoundException(
         'Either email or phone number must be provided',
       );
     }
 
     // Create a new user entity from the DTO
-    const user = this.userRepository.create(createUserDto);
+    const user = this.userRepository.create({
+      ...createUserDto,
+      email: requiredUserFields.email ?? undefined,
+      phoneNumber: requiredUserFields.phoneNumber ?? undefined,
+      name: requiredUserFields.name,
+    });
+
     // Persist the user to the database
     return await this.userRepository.save(user);
   }

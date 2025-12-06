@@ -1,5 +1,6 @@
 import { Gym } from 'src/features/gyms/entities/gym.entity';
 import {
+  AfterLoad,
   Column,
   Entity,
   JoinColumn,
@@ -75,24 +76,25 @@ export class User {
   @Column({ nullable: true })
   homeGymId: string;
 
-  /**
-   * Calculated age based on birthdate.
-   * Returns the user's current age in years.
-   */
-  get age(): number {
-    const today = new Date();
-    const birthDate = new Date(this.birthdate);
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
+  // Non-persisted field - calculated on load
+  age: number;
 
-    // Adjust age if birthday hasn't occurred yet this year
-    if (
-      monthDiff < 0 ||
-      (monthDiff === 0 && today.getDate() < birthDate.getDate())
-    ) {
-      age--;
+  @AfterLoad()
+  calculateAge() {
+    if (this.birthdate) {
+      const today = new Date();
+      const birthDate = new Date(this.birthdate);
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+
+      if (
+        monthDiff < 0 ||
+        (monthDiff === 0 && today.getDate() < birthDate.getDate())
+      ) {
+        age--;
+      }
+
+      this.age = age;
     }
-
-    return age;
   }
 }
