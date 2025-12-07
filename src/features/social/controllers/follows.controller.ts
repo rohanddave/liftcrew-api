@@ -8,6 +8,7 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  Req,
 } from '@nestjs/common';
 import { SocialService } from '../services/social.service';
 import { SendFollowRequestDto } from '../dto/send-follow-request.dto';
@@ -15,6 +16,7 @@ import { AcceptFollowRequestDto } from '../dto/accept-follow-request.dto';
 import { RejectFollowRequestDto } from '../dto/reject-follow-request.dto';
 import { PaginationDto } from '../dto/pagination.dto';
 import { FollowStatus } from '../types';
+import { RequestWithUser } from 'src/common/types/request.type';
 
 @Controller('follows')
 export class FollowsController {
@@ -22,56 +24,64 @@ export class FollowsController {
 
   /**
    * Send a follow request to another user.
-   * POST /follows/:userId/request
+   * Uses authenticated user ID from request.user.id as the follower.
+   * POST /follows/request
    */
-  @Post(':userId/request')
+  @Post('request')
   @HttpCode(HttpStatus.CREATED)
   async sendFollowRequest(
-    @Param('userId') followerId: string,
+    @Req() request: RequestWithUser,
     @Body() dto: SendFollowRequestDto,
   ) {
+    const followerId = request.user.id;
     await this.socialService.sendFollowRequest(followerId, dto.followeeId);
     return { message: 'Follow request sent successfully' };
   }
 
   /**
    * Accept a follow request.
-   * POST /follows/:userId/accept
+   * Uses authenticated user ID from request.user.id as the followee (person accepting).
+   * POST /follows/accept
    */
-  @Post(':userId/accept')
+  @Post('accept')
   @HttpCode(HttpStatus.OK)
   async acceptFollowRequest(
-    @Param('userId') followeeId: string,
+    @Req() request: RequestWithUser,
     @Body() dto: AcceptFollowRequestDto,
   ) {
+    const followeeId = request.user.id;
     await this.socialService.acceptFollowRequest(followeeId, dto.followerId);
     return { message: 'Follow request accepted successfully' };
   }
 
   /**
    * Reject a follow request.
-   * POST /follows/:userId/reject
+   * Uses authenticated user ID from request.user.id as the followee (person rejecting).
+   * POST /follows/reject
    */
-  @Post(':userId/reject')
+  @Post('reject')
   @HttpCode(HttpStatus.OK)
   async rejectFollowRequest(
-    @Param('userId') followeeId: string,
+    @Req() request: RequestWithUser,
     @Body() dto: RejectFollowRequestDto,
   ) {
+    const followeeId = request.user.id;
     await this.socialService.rejectFollowRequest(followeeId, dto.followerId);
     return { message: 'Follow request rejected successfully' };
   }
 
   /**
    * Unfollow a user.
-   * DELETE /follows/:userId/unfollow/:followeeId
+   * Uses authenticated user ID from request.user.id as the follower (person unfollowing).
+   * DELETE /follows/unfollow/:followeeId
    */
-  @Delete(':userId/unfollow/:followeeId')
+  @Delete('unfollow/:followeeId')
   @HttpCode(HttpStatus.OK)
   async unfollowUser(
-    @Param('userId') followerId: string,
+    @Req() request: RequestWithUser,
     @Param('followeeId') followeeId: string,
   ) {
+    const followerId = request.user.id;
     await this.socialService.unfollowUser(followerId, followeeId);
     return { message: 'Unfollowed successfully' };
   }
@@ -87,6 +97,8 @@ export class FollowsController {
     @Query() paginationDto: PaginationDto,
     @Query('status') status?: FollowStatus,
   ) {
+    console.log('pagination dto: ', paginationDto);
+    console.log('paginationDto.limit type:', typeof paginationDto.limit);
     const result = await this.socialService.getFollowers(
       userId,
       paginationDto.page,

@@ -6,6 +6,7 @@ import {
 } from './follows-repository.interface';
 import { Injectable } from '@nestjs/common';
 import { FollowStatus } from '../types';
+import { int } from 'neo4j-driver';
 
 /**
  * Neo4j-based implementation of the FollowsRepository.
@@ -148,7 +149,9 @@ export class GraphFollowsRepository implements FollowsRepository {
     limit: number,
     status?: FollowStatus,
   ): Promise<{ data: FollowerResult[]; total: number }> {
-    const skip = (page - 1) * limit;
+    // Convert to Neo4j integers to avoid BigInt mixing errors
+    const skip = int((page - 1) * limit);
+    const intLimit = int(limit);
     const statusFilter = status ? 'AND r.status = $status' : '';
 
     const query = `
@@ -169,7 +172,7 @@ export class GraphFollowsRepository implements FollowsRepository {
     `;
 
     const [results, countResults] = await Promise.all([
-      this.neo4jService.read(query, { userId, status, skip, limit }),
+      this.neo4jService.read(query, { userId, status, skip, limit: intLimit }),
       this.neo4jService.read(countQuery, { userId, status }),
     ]);
 
@@ -184,7 +187,7 @@ export class GraphFollowsRepository implements FollowsRepository {
 
     return {
       data,
-      total: countResults[0]?.total || 0,
+      total: Number(countResults[0]?.total || 0),
     };
   }
 
@@ -197,7 +200,9 @@ export class GraphFollowsRepository implements FollowsRepository {
     limit: number,
     status?: FollowStatus,
   ): Promise<{ data: FollowerResult[]; total: number }> {
-    const skip = (page - 1) * limit;
+    // Convert to Neo4j integers to avoid BigInt mixing errors
+    const skip = int((page - 1) * limit);
+    const intLimit = int(limit);
     const statusFilter = status ? 'AND r.status = $status' : '';
 
     const query = `
@@ -218,7 +223,7 @@ export class GraphFollowsRepository implements FollowsRepository {
     `;
 
     const [results, countResults] = await Promise.all([
-      this.neo4jService.read(query, { userId, status, skip, limit }),
+      this.neo4jService.read(query, { userId, status, skip, limit: intLimit }),
       this.neo4jService.read(countQuery, { userId, status }),
     ]);
 
@@ -233,7 +238,7 @@ export class GraphFollowsRepository implements FollowsRepository {
 
     return {
       data,
-      total: countResults[0]?.total || 0,
+      total: Number(countResults[0]?.total || 0),
     };
   }
 

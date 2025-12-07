@@ -123,6 +123,8 @@ export class SocialService {
     limit: number = 20,
     status?: FollowStatus,
   ) {
+
+    console.log('Inside getFollowers - type of limit: ', typeof limit);
     return this.followsRepository.findFollowers(userId, page, limit, status);
   }
 

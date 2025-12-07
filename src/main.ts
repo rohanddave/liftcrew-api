@@ -6,12 +6,23 @@ import {
 
 import { AppModule } from './app.module';
 import { NestFactory } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     new FastifyAdapter(),
     { cors: true },
+  );
+
+  // Enable validation and transformation globally
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
+    }),
   );
 
   app.setGlobalPrefix('api');
