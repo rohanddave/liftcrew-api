@@ -1021,7 +1021,7 @@
 			"name": "Workouts",
 			"item": [
 				{
-					"name": "Get All Workouts",
+					"name": "Get All Workouts (Upcoming)",
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -1034,7 +1034,67 @@
 								"workouts"
 							]
 						},
-						"description": "Retrieves all workouts from the database"
+						"description": "Retrieves upcoming workouts for the authenticated user (from today onwards). Results are ordered by startedAt date in ascending order."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Workouts by Date Range",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/workouts?startDate=2025-12-01T00:00:00Z&endDate=2025-12-31T23:59:59Z",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"workouts"
+							],
+							"query": [
+								{
+									"key": "startDate",
+									"value": "2025-12-01T00:00:00Z",
+									"description": "Start date for filtering workouts (ISO 8601 format)"
+								},
+								{
+									"key": "endDate",
+									"value": "2025-12-31T23:59:59Z",
+									"description": "End date for filtering workouts (ISO 8601 format)"
+								}
+							]
+						},
+						"description": "Retrieves workouts for the authenticated user within a specific date range. Useful for fetching past workouts or workouts in a specific time period."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Past Workouts",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/workouts?startDate=2025-01-01T00:00:00Z&endDate=2025-12-06T23:59:59Z",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"workouts"
+							],
+							"query": [
+								{
+									"key": "startDate",
+									"value": "2025-01-01T00:00:00Z",
+									"description": "Start date (e.g., beginning of year)"
+								},
+								{
+									"key": "endDate",
+									"value": "2025-12-06T23:59:59Z",
+									"description": "End date (e.g., yesterday or specific past date)"
+								}
+							]
+						},
+						"description": "Retrieves past workouts for the authenticated user by specifying both startDate and endDate before today."
 					},
 					"response": []
 				},
@@ -1122,7 +1182,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"Morning Chest Day\",\n  \"status\": \"in_progress\",\n  \"createdById\": \"{{userId}}\"\n}"
+							"raw": "{\n  \"name\": \"Morning Chest Day\",\n  \"startedAt\": \"2025-12-07T10:00:00Z\",\n  \"status\": \"in_progress\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/workouts",

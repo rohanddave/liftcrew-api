@@ -4,7 +4,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, MoreThanOrEqual, LessThanOrEqual, Between } from 'typeorm';
 import { Workout } from '../entities/workout.entity';
 import { WorkoutExercise } from '../entities/workout-exercise.entity';
 import { ExerciseSet } from '../entities/set.entity';
@@ -14,6 +14,7 @@ import { UpdateWorkoutDto } from '../dto/update-workout.dto';
 import { AddWorkoutExerciseDto } from '../dto/add-workout-exercise.dto';
 import { AddParticipantDto } from '../dto/add-participant.dto';
 import { AddSetDto } from '../dto/add-set.dto';
+import { WorkoutQueryDto } from '../dto/workout-query.dto';
 
 /**
  * Service responsible for managing workout business logic and database operations.
@@ -371,12 +372,42 @@ export class WorkoutsService {
   }
 
   /**
-   * Retrieves all workouts.
-   * @returns Promise<Workout[]> Array of all workout entities
+   * Retrieves workouts for a user with optional date range filtering.
+   * By default, returns upcoming workouts (from today onwards).
+   * @param userId - The UUID of the user
+   * @param query - Optional query parameters for date filtering
+   * @returns Promise<Workout[]> Array of workout entities
    */
-  async findAll(): Promise<Workout[]> {
+  async findAllForUser(
+    userId: string,
+    query?: WorkoutQueryDto,
+  ): Promise<Workout[]> {
+    // Determine date range
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    const startDate = query?.startDate ? new Date(query.startDate) : startOfToday;
+    const endDate = query?.endDate ? new Date(query.endDate) : undefined;
+
+    // Build where clause based on date range
+    let dateFilter: any;
+    if (endDate) {
+      // Both start and end date provided - use Between
+      dateFilter = Between(startDate, endDate);
+    } else {
+      // Only start date (or default to today) - use MoreThanOrEqual
+      dateFilter = MoreThanOrEqual(startDate);
+    }
+
     return await this.workoutRepository.find({
+      where: {
+        createdById: userId,
+        startedAt: dateFilter,
+      },
       relations: ['createdBy', 'participants', 'exercises'],
+      order: {
+        startedAt: 'ASC',
+      },
     });
   }
 

@@ -9,6 +9,7 @@ import {
   HttpCode,
   HttpStatus,
   Req,
+  Query,
 } from '@nestjs/common';
 import { WorkoutsService } from '../services/workouts.service';
 import { CreateWorkoutDto } from '../dto/create-workout.dto';
@@ -16,6 +17,7 @@ import { UpdateWorkoutDto } from '../dto/update-workout.dto';
 import { AddWorkoutExerciseDto } from '../dto/add-workout-exercise.dto';
 import { AddParticipantDto } from '../dto/add-participant.dto';
 import { AddSetDto } from '../dto/add-set.dto';
+import { WorkoutQueryDto } from '../dto/workout-query.dto';
 import { RequestWithUser } from 'src/common/types/request.type';
 
 /**
@@ -27,12 +29,24 @@ export class WorkoutsController {
   constructor(private readonly workoutsService: WorkoutsService) {}
 
   /**
-   * Retrieves all workouts from the database.
-   * @returns Promise<Workout[]> Array of all workout entities
+   * Retrieves workouts for the authenticated user with optional date range filtering.
+   * By default, returns upcoming workouts (from today onwards).
+   * @param request - Request with authenticated user
+   * @param query - Optional query parameters for date range filtering
+   * @returns Promise<Workout[]> Array of workout entities
+   *
+   * @example
+   * GET /workouts - Returns upcoming workouts (from today onwards)
+   * GET /workouts?startDate=2025-12-01T00:00:00Z - Returns workouts from Dec 1st onwards
+   * GET /workouts?startDate=2025-12-01T00:00:00Z&endDate=2025-12-31T23:59:59Z - Returns workouts in December
    */
   @Get()
-  findAll() {
-    return this.workoutsService.findAll();
+  findAll(
+    @Req() request: RequestWithUser,
+    @Query() query: WorkoutQueryDto,
+  ) {
+    const { user } = request;
+    return this.workoutsService.findAllForUser(user.id, query);
   }
 
   /**

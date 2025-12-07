@@ -24,9 +24,9 @@ export class CreateWorkoutDto {
    * Timestamp when the workout started.
    * @example "2025-12-07T10:00:00Z"
    */
-  @IsOptional()
+  @IsNotEmpty()
   @IsISO8601()
-  startedAt?: string;
+  startedAt: string;
 
   /**
    * Status of the workout.
