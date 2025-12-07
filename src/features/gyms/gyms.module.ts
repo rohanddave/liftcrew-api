@@ -3,6 +3,9 @@ import { GymsController } from './controllers/gyms.controller';
 import { GymsService } from './services/gyms.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Gym } from './entities/gym.entity';
+import { GymEquipment } from './entities/gym-equipment.entity';
+import { GymEquipmentController } from './controllers/gym-equipment.controller';
+import { GymEquipmentService } from './services/gym-equipment.service';
 
 /**
  * Gyms Module
@@ -16,9 +19,9 @@ import { Gym } from './entities/gym.entity';
  * - GymsService: For use in other modules that need gym data access
  */
 @Module({
-  imports: [TypeOrmModule.forFeature([Gym])],
-  controllers: [GymsController],
-  providers: [GymsService],
+  imports: [TypeOrmModule.forFeature([Gym, GymEquipment])],
+  controllers: [GymsController, GymEquipmentController],
+  providers: [GymsService, GymEquipmentService],
   exports: [GymsService],
 })
 export class GymsModule {}

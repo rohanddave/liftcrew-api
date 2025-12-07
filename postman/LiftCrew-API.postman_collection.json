@@ -715,6 +715,169 @@
 				}
 			],
 			"description": "Gym management endpoints"
+		},
+		{
+			"name": "Gym Equipment",
+			"item": [
+				{
+					"name": "Get All Gym Equipment",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/gym-equipment",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"gym-equipment"
+							]
+						},
+						"description": "Retrieves all gym equipment from the database"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Gym Equipment by Type",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/gym-equipment?type=cardio",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"gym-equipment"
+							],
+							"query": [
+								{
+									"key": "type",
+									"value": "cardio",
+									"description": "Equipment type (e.g., cardio, strength, free-weights)"
+								}
+							]
+						},
+						"description": "Retrieves gym equipment filtered by type"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Gym Equipment by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/gym-equipment/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"gym-equipment",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "550e8400-e29b-41d4-a716-446655440000",
+									"description": "Gym Equipment UUID"
+								}
+							]
+						},
+						"description": "Retrieves a single gym equipment by its UUID"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Gym Equipment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Treadmill\",\n  \"type\": \"cardio\",\n  \"brand\": \"Life Fitness\",\n  \"model\": \"T5\",\n  \"description\": \"Commercial-grade treadmill with advanced features\",\n  \"imageUrl\": \"https://example.com/images/treadmill.jpg\",\n  \"weight\": 150\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/gym-equipment",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"gym-equipment"
+							]
+						},
+						"description": "Creates a new gym equipment in the database"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Gym Equipment",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Treadmill Pro\",\n  \"type\": \"cardio\",\n  \"brand\": \"Life Fitness\",\n  \"model\": \"T5 Pro\",\n  \"description\": \"Updated commercial-grade treadmill with enhanced features\",\n  \"imageUrl\": \"https://example.com/images/treadmill-pro.jpg\",\n  \"weight\": 155\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/gym-equipment/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"gym-equipment",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "550e8400-e29b-41d4-a716-446655440000",
+									"description": "Gym Equipment UUID"
+								}
+							]
+						},
+						"description": "Updates an existing gym equipment's information"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Gym Equipment",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/gym-equipment/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"gym-equipment",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "550e8400-e29b-41d4-a716-446655440000",
+									"description": "Gym Equipment UUID"
+								}
+							]
+						},
+						"description": "Deletes a gym equipment from the database"
+					},
+					"response": []
+				}
+			],
+			"description": "Gym equipment management endpoints"
 		}
 	],
 	"auth": {
