@@ -43,7 +43,7 @@ export class GymsService {
    * @returns Promise<Gym | null> The gym entity if found, null otherwise
    */
   async findOne(id: string): Promise<Gym | null> {
-    const gym = await this.gymRepository.findOne({ where: { id } });
+    const gym = await this.gymRepository.findOneByOrFail({ id });
     return gym;
   }
 
