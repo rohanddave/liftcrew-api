@@ -81,11 +81,14 @@ export class UsersController {
    * @throws NotFoundException if the user is not found
    */
   @Put()
-  update(
+  async update(
     @Req() request: RequestWithUser,
     @Body() updateUserDto: UpdateUserDto,
   ) {
-    return this.usersService.update(request.user.id, updateUserDto);
+    const user = await this.usersService.findOneByEmailOrFail(
+      request.user.email,
+    );
+    return this.usersService.update(user.id, updateUserDto);
   }
 
   /**
