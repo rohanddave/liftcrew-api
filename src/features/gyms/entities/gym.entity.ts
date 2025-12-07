@@ -20,10 +20,16 @@ export class Gym {
   @Column()
   address: string;
 
-  @Column('decimal', { precision: 10, scale: 6 })
+  @Column('decimal', { precision: 10, scale: 6, transformer: {
+    to: (value: number) => value,
+    from: (value: string) => parseFloat(value)
+  }})
   lat: number;
 
-  @Column('decimal', { precision: 10, scale: 6 })
+  @Column('decimal', { precision: 10, scale: 6, transformer: {
+    to: (value: number) => value,
+    from: (value: string) => parseFloat(value)
+  }})
   lng: number;
 
   @ManyToMany(() => User, (user) => user.gyms)
