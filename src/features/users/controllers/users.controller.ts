@@ -64,7 +64,6 @@ export class UsersController {
   ) {
     const { email } = request;
     const createdUser = await this.usersService.create(createUserDto, email);
-    console.log('Created User: ', createdUser);
     return createdUser;
   }
 
