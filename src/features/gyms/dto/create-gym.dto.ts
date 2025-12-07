@@ -1,4 +1,10 @@
-import { IsLatLong, IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import {
+  IsLatitude,
+  IsLongitude,
+  IsNotEmpty,
+  IsNumber,
+  IsString,
+} from 'class-validator';
 
 /**
  * Data Transfer Object for creating a new gym.
@@ -28,7 +34,7 @@ export class CreateGymDto {
    */
   @IsNotEmpty()
   @IsNumber()
-  @IsLatLong()
+  @IsLatitude()
   lat: number;
 
   /**
@@ -38,6 +44,6 @@ export class CreateGymDto {
    */
   @IsNotEmpty()
   @IsNumber()
-  @IsLatLong()
+  @IsLongitude()
   lng: number;
 }
