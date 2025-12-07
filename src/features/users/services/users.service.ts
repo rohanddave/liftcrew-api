@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { User } from '../entities/user.entity';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
+import { GymsService } from 'src/features/gyms/services/gyms.service';
 
 /**
  * Service responsible for managing user business logic and database operations.
@@ -14,6 +15,7 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private readonly gymsService: GymsService,
   ) {}
 
   /**
@@ -91,6 +93,8 @@ export class UsersService {
         'Either email or phone number must be provided',
       );
     }
+
+    const gym = await this.gymsService.findOneOrFail(createUserDto.homeGymId);
 
     // Create a new user entity from the DTO
     const user = this.userRepository.create({

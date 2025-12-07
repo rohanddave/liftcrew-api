@@ -3,6 +3,7 @@ import { UsersController } from './controllers/users.controller';
 import { UsersService } from './services/users.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
+import { GymsModule } from '../gyms/gyms.module';
 
 /**
  * Users Module
@@ -17,7 +18,7 @@ import { User } from './entities/user.entity';
  * - UsersService: For use in other modules that need user data access (e.g., AuthModule)
  */
 @Module({
-  imports: [TypeOrmModule.forFeature([User])],
+  imports: [TypeOrmModule.forFeature([User]), GymsModule],
   controllers: [UsersController],
   providers: [UsersService],
   exports: [UsersService],

@@ -61,19 +61,14 @@ export class UsersController {
     @Req() request: RequestWithUser,
     @Body() createUserDto: CreateUserDto,
   ) {
-    console.log('CreateUserDto:', createUserDto);
-    console.log('Authenticated User:', request.user);
-
     const { email, phoneNumber, name } = request.user;
     const requiredFields = { email, phoneNumber, name };
-    console.log('Required Fields from Authenticated User:', requiredFields);
 
     const createdUser = await this.usersService.create(
       createUserDto,
       requiredFields,
     );
 
-    console.log('Created User:', createdUser);
     return createdUser;
   }
 
