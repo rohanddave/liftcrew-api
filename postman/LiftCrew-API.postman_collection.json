@@ -878,6 +878,572 @@
 				}
 			],
 			"description": "Gym equipment management endpoints"
+		},
+		{
+			"name": "Exercises",
+			"item": [
+				{
+					"name": "Get All Exercises",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/exercises",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"exercises"
+							]
+						},
+						"description": "Retrieves all exercises from the database with muscle groups"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Exercise by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/exercises/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"exercises",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "550e8400-e29b-41d4-a716-446655440000",
+									"description": "Exercise UUID"
+								}
+							]
+						},
+						"description": "Retrieves a single exercise by its UUID with muscle groups"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Exercise",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Barbell Bench Press\",\n  \"description\": \"Lie on a flat bench and press the barbell up from chest level\",\n  \"category\": \"compound\",\n  \"equipmentType\": \"barbell\",\n  \"muscleGroupIds\": []\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/exercises",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"exercises"
+							]
+						},
+						"description": "Creates a new exercise in the database"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Exercise",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Barbell Bench Press - Updated\",\n  \"description\": \"Updated description\",\n  \"category\": \"compound\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/exercises/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"exercises",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "550e8400-e29b-41d4-a716-446655440000",
+									"description": "Exercise UUID"
+								}
+							]
+						},
+						"description": "Updates an existing exercise's information"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Exercise",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/exercises/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"exercises",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "550e8400-e29b-41d4-a716-446655440000",
+									"description": "Exercise UUID"
+								}
+							]
+						},
+						"description": "Deletes an exercise from the database"
+					},
+					"response": []
+				}
+			],
+			"description": "Exercise management endpoints"
+		},
+		{
+			"name": "Workouts",
+			"item": [
+				{
+					"name": "Get All Workouts",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/workouts",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"workouts"
+							]
+						},
+						"description": "Retrieves all workouts from the database"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Workout by ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Parse the response body",
+									"const responseJson = pm.response.json();",
+									"",
+									"// Check if id exists in the response",
+									"if (responseJson.id) {",
+									"    // Set the workout ID as the workoutId environment variable",
+									"    pm.environment.set(\"workoutId\", responseJson.id);",
+									"    console.log(\"Workout ID has been saved to workoutId variable:\", responseJson.id);",
+									"} else {",
+									"    console.log(\"No id found in response\");",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/workouts/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"workouts",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "{{workoutId}}",
+									"description": "Workout UUID"
+								}
+							]
+						},
+						"description": "Retrieves a single workout by its UUID with all relations. Automatically saves the workout ID to the workoutId environment variable."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Workout",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Parse the response body",
+									"const responseJson = pm.response.json();",
+									"",
+									"// Check if id exists in the response",
+									"if (responseJson.id) {",
+									"    // Set the workout ID as the workoutId environment variable",
+									"    pm.environment.set(\"workoutId\", responseJson.id);",
+									"    console.log(\"Workout ID has been saved to workoutId variable:\", responseJson.id);",
+									"} else {",
+									"    console.log(\"No id found in response\");",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Morning Chest Day\",\n  \"status\": \"in_progress\",\n  \"createdById\": \"{{userId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/workouts",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"workouts"
+							]
+						},
+						"description": "Creates a new workout in the database. Automatically saves the workout ID to the workoutId environment variable."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Workout",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Evening Chest Day\",\n  \"status\": \"completed\",\n  \"endedAt\": \"2025-12-07T12:00:00Z\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/workouts/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"workouts",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "{{workoutId}}",
+									"description": "Workout UUID"
+								}
+							]
+						},
+						"description": "Updates an existing workout's information"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Workout",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/workouts/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"workouts",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "{{workoutId}}",
+									"description": "Workout UUID"
+								}
+							]
+						},
+						"description": "Deletes a workout from the database. TODO: Only allow deletion by the workout creator"
+					},
+					"response": []
+				},
+				{
+					"name": "Add Participant",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"userId\": \"550e8400-e29b-41d4-a716-446655440001\",\n  \"role\": \"participant\",\n  \"gymId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/workouts/:id/participants",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"workouts",
+								":id",
+								"participants"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "{{workoutId}}",
+									"description": "Workout UUID"
+								}
+							]
+						},
+						"description": "Adds a participant to a workout. TODO: Check friendship status before allowing participant to be added"
+					},
+					"response": []
+				},
+				{
+					"name": "Remove Participant",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/workouts/:id/participants/:userId",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"workouts",
+								":id",
+								"participants",
+								":userId"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "{{workoutId}}",
+									"description": "Workout UUID"
+								},
+								{
+									"key": "userId",
+									"value": "550e8400-e29b-41d4-a716-446655440001",
+									"description": "User UUID"
+								}
+							]
+						},
+						"description": "Removes a participant from a workout. TODO: Check friendship status and permissions before allowing removal"
+					},
+					"response": []
+				},
+				{
+					"name": "Add Exercise to Workout",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Parse the response body",
+									"const responseJson = pm.response.json();",
+									"",
+									"// Check if id exists in the response",
+									"if (responseJson.id) {",
+									"    // Set the workout exercise ID as the workoutExerciseId environment variable",
+									"    pm.environment.set(\"workoutExerciseId\", responseJson.id);",
+									"    console.log(\"Workout Exercise ID has been saved to workoutExerciseId variable:\", responseJson.id);",
+									"} else {",
+									"    console.log(\"No id found in response\");",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"exerciseId\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"orderIndex\": 1,\n  \"notes\": \"Focus on form, not weight\",\n  \"restSeconds\": 90,\n  \"sets\": [\n    {\n      \"performedById\": \"{{userId}}\",\n      \"setNumber\": 1,\n      \"setType\": \"warmup\",\n      \"reps\": 10,\n      \"weightKg\": 60\n    },\n    {\n      \"performedById\": \"{{userId}}\",\n      \"setNumber\": 2,\n      \"setType\": \"working\",\n      \"reps\": 8,\n      \"weightKg\": 80,\n      \"rpe\": 8.5\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/workouts/:id/exercises",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"workouts",
+								":id",
+								"exercises"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "{{workoutId}}",
+									"description": "Workout UUID"
+								}
+							]
+						},
+						"description": "Adds an exercise with optional sets to a workout. Automatically saves the workout exercise ID to the workoutExerciseId environment variable."
+					},
+					"response": []
+				},
+				{
+					"name": "Remove Exercise from Workout",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/workouts/:id/exercises/:exerciseId",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"workouts",
+								":id",
+								"exercises",
+								":exerciseId"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "{{workoutId}}",
+									"description": "Workout UUID"
+								},
+								{
+									"key": "exerciseId",
+									"value": "{{workoutExerciseId}}",
+									"description": "Workout Exercise UUID"
+								}
+							]
+						},
+						"description": "Removes an exercise and all its sets from a workout"
+					},
+					"response": []
+				},
+				{
+					"name": "Add Set to Exercise",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"performedById\": \"{{userId}}\",\n  \"setNumber\": 3,\n  \"setType\": \"working\",\n  \"reps\": 6,\n  \"weightKg\": 85,\n  \"rpe\": 9,\n  \"completed\": true,\n  \"notes\": \"Felt strong on this set\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/workouts/:id/exercises/:exerciseId/sets",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"workouts",
+								":id",
+								"exercises",
+								":exerciseId",
+								"sets"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "{{workoutId}}",
+									"description": "Workout UUID"
+								},
+								{
+									"key": "exerciseId",
+									"value": "{{workoutExerciseId}}",
+									"description": "Workout Exercise UUID"
+								}
+							]
+						},
+						"description": "Adds a set to a workout exercise"
+					},
+					"response": []
+				},
+				{
+					"name": "Remove Set from Exercise",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/workouts/:id/exercises/:exerciseId/sets/:setId",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"workouts",
+								":id",
+								"exercises",
+								":exerciseId",
+								"sets",
+								":setId"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "{{workoutId}}",
+									"description": "Workout UUID"
+								},
+								{
+									"key": "exerciseId",
+									"value": "{{workoutExerciseId}}",
+									"description": "Workout Exercise UUID"
+								},
+								{
+									"key": "setId",
+									"value": "550e8400-e29b-41d4-a716-446655440000",
+									"description": "Set UUID"
+								}
+							]
+						},
+						"description": "Removes a set from a workout exercise"
+					},
+					"response": []
+				}
+			],
+			"description": "Workout management endpoints including CRUD operations, participant management, exercise management, and set management"
 		}
 	],
 	"auth": {
