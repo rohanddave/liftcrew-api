@@ -5,6 +5,7 @@ import { Follows } from './entities/follows.entity';
 import { SocialService } from './services/social.service';
 import { GraphFollowsRepository } from './repositories/graph-follows.repository';
 import { RelationalFollowsRepository } from './repositories/relational-follows-repository';
+import { FollowsController } from './controllers/follows.controller';
 
 export interface SocialModuleOptions {
   type: 'graph' | 'relational';
@@ -16,16 +17,18 @@ export class SocialModule {
     return {
       module: SocialModule,
       imports: [...this.getImports(options)],
+      controllers: [FollowsController],
       providers: [
         SocialService,
         {
-          provide: 'FOLLOWS_REPOSITORY',
+          provide: 'FollowsRepository',
           useClass:
             options.type === 'graph'
               ? GraphFollowsRepository
               : RelationalFollowsRepository,
         },
       ],
+      exports: [SocialService],
     };
   }
 

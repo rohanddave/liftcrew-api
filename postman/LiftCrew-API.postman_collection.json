@@ -291,6 +291,301 @@
 			"description": "User management endpoints"
 		},
 		{
+			"name": "Social",
+			"item": [
+				{
+					"name": "Send Follow Request",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"followeeId\": \"550e8400-e29b-41d4-a716-446655440001\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/follows/:userId/request",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"follows",
+								":userId",
+								"request"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "550e8400-e29b-41d4-a716-446655440000",
+									"description": "User ID of the follower (person sending the request)"
+								}
+							]
+						},
+						"description": "Send a follow request to another user. Creates a pending follow relationship."
+					},
+					"response": []
+				},
+				{
+					"name": "Accept Follow Request",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"followerId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/follows/:userId/accept",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"follows",
+								":userId",
+								"accept"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "550e8400-e29b-41d4-a716-446655440001",
+									"description": "User ID of the followee (person accepting the request)"
+								}
+							]
+						},
+						"description": "Accept a pending follow request from another user."
+					},
+					"response": []
+				},
+				{
+					"name": "Reject Follow Request",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"followerId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/follows/:userId/reject",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"follows",
+								":userId",
+								"reject"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "550e8400-e29b-41d4-a716-446655440001",
+									"description": "User ID of the followee (person rejecting the request)"
+								}
+							]
+						},
+						"description": "Reject a pending follow request from another user."
+					},
+					"response": []
+				},
+				{
+					"name": "Unfollow User",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/follows/:userId/unfollow/:followeeId",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"follows",
+								":userId",
+								"unfollow",
+								":followeeId"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "550e8400-e29b-41d4-a716-446655440000",
+									"description": "User ID of the follower"
+								},
+								{
+									"key": "followeeId",
+									"value": "550e8400-e29b-41d4-a716-446655440001",
+									"description": "User ID of the person to unfollow"
+								}
+							]
+						},
+						"description": "Remove a follow relationship (unfollow a user)."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Followers",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/follows/:userId/followers?page=1&limit=20&status=accepted",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"follows",
+								":userId",
+								"followers"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1",
+									"description": "Page number (default: 1)"
+								},
+								{
+									"key": "limit",
+									"value": "20",
+									"description": "Results per page (default: 20, max: 100)"
+								},
+								{
+									"key": "status",
+									"value": "accepted",
+									"description": "Filter by status: pending, accepted, rejected (optional)"
+								}
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "550e8400-e29b-41d4-a716-446655440000",
+									"description": "User ID"
+								}
+							]
+						},
+						"description": "Get paginated list of followers for a user. Optionally filter by status."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Following",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/follows/:userId/following?page=1&limit=20&status=accepted",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"follows",
+								":userId",
+								"following"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1",
+									"description": "Page number (default: 1)"
+								},
+								{
+									"key": "limit",
+									"value": "20",
+									"description": "Results per page (default: 20, max: 100)"
+								},
+								{
+									"key": "status",
+									"value": "accepted",
+									"description": "Filter by status: pending, accepted, rejected (optional)"
+								}
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "550e8400-e29b-41d4-a716-446655440000",
+									"description": "User ID"
+								}
+							]
+						},
+						"description": "Get paginated list of users that this user follows. Optionally filter by status."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Follow Stats",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/follows/:userId/stats",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"follows",
+								":userId",
+								"stats"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "550e8400-e29b-41d4-a716-446655440000",
+									"description": "User ID"
+								}
+							]
+						},
+						"description": "Get follow statistics for a user including follower count, following count, and pending requests count."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Relationship Between Users",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/follows/:userId/relationship/:targetUserId",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"follows",
+								":userId",
+								"relationship",
+								":targetUserId"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "550e8400-e29b-41d4-a716-446655440000",
+									"description": "User ID of the follower"
+								},
+								{
+									"key": "targetUserId",
+									"value": "550e8400-e29b-41d4-a716-446655440001",
+									"description": "User ID of the target user"
+								}
+							]
+						},
+						"description": "Get the follow relationship between two users. Returns the relationship status and details if it exists."
+					},
+					"response": []
+				}
+			],
+			"description": "Social features including follow requests, followers, and following management"
+		},
+		{
 			"name": "Gyms",
 			"item": [
 				{

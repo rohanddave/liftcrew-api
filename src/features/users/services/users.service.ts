@@ -76,7 +76,7 @@ export class UsersService {
   /**
    * Creates a new user in the database.
    * @param createUserDto - The data transfer object containing user information
-   * @returns Promise<User> The newly created and saved user entity
+   * @returns Promise<User> The newly created and saved user entity with computed age property
    */
   async create(
     createUserDto: CreateUserDto,
@@ -101,7 +101,11 @@ export class UsersService {
     });
 
     // Persist the user to the database
-    return await this.userRepository.save(user);
+    const savedUser = await this.userRepository.save(user);
+
+    // Reload the user to trigger the @AfterLoad hook that computes the age
+    const userWithAge = await this.findOneOrFail(savedUser.id);
+    return userWithAge;
   }
 
   /**

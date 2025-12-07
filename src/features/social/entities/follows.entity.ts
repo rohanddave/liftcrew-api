@@ -8,6 +8,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { User } from 'src/features/users/entities/user.entity';
+import { FollowStatus } from '../types';
 
 /**
  * Junction table entity representing follow relationships between users.
@@ -52,6 +53,18 @@ export class Follows {
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'followeeId' })
   followee: User;
+
+  /**
+   * Status of the follow request.
+   * Can be 'pending', 'accepted', or 'rejected'.
+   * Defaults to 'pending' when a follow request is created.
+   */
+  @Column({
+    type: 'enum',
+    enum: FollowStatus,
+    default: FollowStatus.PENDING,
+  })
+  status: FollowStatus;
 
   /**
    * Timestamp when the follow relationship was created.

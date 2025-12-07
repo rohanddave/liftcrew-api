@@ -57,7 +57,7 @@ export class UsersController {
    * @returns Promise<User> The newly created user entity
    */
   @Post()
-  create(
+  async create(
     @Req() request: RequestWithUser,
     @Body() createUserDto: CreateUserDto,
   ) {
@@ -68,7 +68,13 @@ export class UsersController {
     const requiredFields = { email, phoneNumber, name };
     console.log('Required Fields from Authenticated User:', requiredFields);
 
-    return this.usersService.create(createUserDto, requiredFields);
+    const createdUser = await this.usersService.create(
+      createUserDto,
+      requiredFields,
+    );
+
+    console.log('Created User:', createdUser);
+    return createdUser;
   }
 
   /**
