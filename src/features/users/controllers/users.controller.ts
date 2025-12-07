@@ -97,7 +97,10 @@ export class UsersController {
    */
   @Delete()
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Req() request: RequestWithUser) {
-    return this.usersService.remove(request.user.id);
+  async remove(@Req() request: RequestWithUser) {
+    const user = await this.usersService.findOneByEmailOrFail(
+      request.user.email,
+    );
+    return this.usersService.remove(user.id);
   }
 }
