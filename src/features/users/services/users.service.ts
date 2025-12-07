@@ -80,28 +80,13 @@ export class UsersService {
    * @param createUserDto - The data transfer object containing user information
    * @returns Promise<User> The newly created and saved user entity with computed age property
    */
-  async create(
-    createUserDto: CreateUserDto,
-    requiredUserFields: {
-      email?: string | null;
-      phoneNumber?: string | null;
-      name: string;
-    },
-  ): Promise<User> {
-    if (!requiredUserFields.email && !requiredUserFields.phoneNumber) {
-      throw new NotFoundException(
-        'Either email or phone number must be provided',
-      );
-    }
-
-    const gym = await this.gymsService.findOneOrFail(createUserDto.homeGymId);
+  async create(createUserDto: CreateUserDto, email: string): Promise<User> {
+    await this.gymsService.findOneOrFail(createUserDto.homeGymId);
 
     // Create a new user entity from the DTO
     const user = this.userRepository.create({
       ...createUserDto,
-      email: requiredUserFields.email ?? undefined,
-      phoneNumber: requiredUserFields.phoneNumber ?? undefined,
-      name: requiredUserFields.name,
+      email,
     });
 
     // Persist the user to the database

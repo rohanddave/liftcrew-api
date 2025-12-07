@@ -8,10 +8,12 @@ import {
   Param,
   HttpCode,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
 import { GymsService } from '../services/gyms.service';
 import { CreateGymDto } from '../dto/create-gym.dto';
 import { UpdateGymDto } from '../dto/update-gym.dto';
+import { Public } from 'src/common/decorators';
 
 /**
  * Controller for managing gym-related operations.
@@ -25,6 +27,7 @@ export class GymsController {
    * Retrieves all gyms from the database.
    * @returns Promise<Gym[]> Array of all gym entities
    */
+  @Public()
   @Get()
   findAll() {
     return this.gymsService.findAll();

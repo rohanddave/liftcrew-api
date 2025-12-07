@@ -8,6 +8,7 @@ import {
   Param,
   HttpCode,
   HttpStatus,
+  Req,
 } from '@nestjs/common';
 import { WorkoutsService } from '../services/workouts.service';
 import { CreateWorkoutDto } from '../dto/create-workout.dto';
@@ -15,6 +16,7 @@ import { UpdateWorkoutDto } from '../dto/update-workout.dto';
 import { AddWorkoutExerciseDto } from '../dto/add-workout-exercise.dto';
 import { AddParticipantDto } from '../dto/add-participant.dto';
 import { AddSetDto } from '../dto/add-set.dto';
+import { RequestWithUser } from 'src/common/types/request.type';
 
 /**
  * Controller for managing workout-related operations.
@@ -50,8 +52,12 @@ export class WorkoutsController {
    * @returns Promise<Workout> The newly created workout entity
    */
   @Post()
-  create(@Body() createWorkoutDto: CreateWorkoutDto) {
-    return this.workoutsService.create(createWorkoutDto);
+  create(
+    @Req() request: RequestWithUser,
+    @Body() createWorkoutDto: CreateWorkoutDto,
+  ) {
+    const { user } = request;
+    return this.workoutsService.create(user.id, createWorkoutDto);
   }
 
   /**
@@ -75,8 +81,9 @@ export class WorkoutsController {
    */
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id') id: string) {
-    return this.workoutsService.remove(id);
+  remove(@Req() request: RequestWithUser, @Param('id') id: string) {
+    const { user } = request;
+    return this.workoutsService.remove(user.id, id);
   }
 
   // ==================== Participant Management ====================
@@ -92,10 +99,16 @@ export class WorkoutsController {
    */
   @Post(':id/participants')
   addParticipant(
+    @Req() request: RequestWithUser,
     @Param('id') workoutId: string,
     @Body() addParticipantDto: AddParticipantDto,
   ) {
-    return this.workoutsService.addParticipant(workoutId, addParticipantDto);
+    const { user } = request;
+    return this.workoutsService.addParticipant(
+      user.id,
+      workoutId,
+      addParticipantDto,
+    );
   }
 
   /**
@@ -130,7 +143,10 @@ export class WorkoutsController {
     @Param('id') workoutId: string,
     @Body() addWorkoutExerciseDto: AddWorkoutExerciseDto,
   ) {
-    return this.workoutsService.addExerciseWithSets(workoutId, addWorkoutExerciseDto);
+    return this.workoutsService.addExerciseWithSets(
+      workoutId,
+      addWorkoutExerciseDto,
+    );
   }
 
   /**

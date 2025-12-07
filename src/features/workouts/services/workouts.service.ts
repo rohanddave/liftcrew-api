@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Workout } from '../entities/workout.entity';
@@ -17,6 +21,8 @@ import { AddSetDto } from '../dto/add-set.dto';
  */
 @Injectable()
 export class WorkoutsService {
+  private readonly MAX_PARTICIPANTS_PER_WORKOUT = 25;
+
   constructor(
     @InjectRepository(Workout)
     private readonly workoutRepository: Repository<Workout>,
@@ -33,8 +39,14 @@ export class WorkoutsService {
    * @param createWorkoutDto - The data transfer object containing workout information
    * @returns Promise<Workout> The newly created workout entity
    */
-  async create(createWorkoutDto: CreateWorkoutDto): Promise<Workout> {
-    const workout = this.workoutRepository.create(createWorkoutDto);
+  async create(
+    createdById: string,
+    createWorkoutDto: CreateWorkoutDto,
+  ): Promise<Workout> {
+    const workout = this.workoutRepository.create({
+      ...createWorkoutDto,
+      createdById,
+    });
     return await this.workoutRepository.save(workout);
   }
 
@@ -64,7 +76,10 @@ export class WorkoutsService {
    * @returns Promise<Workout> The updated workout entity
    * @throws NotFoundException if no workout exists with the given ID
    */
-  async update(id: string, updateWorkoutDto: UpdateWorkoutDto): Promise<Workout> {
+  async update(
+    id: string,
+    updateWorkoutDto: UpdateWorkoutDto,
+  ): Promise<Workout> {
     const workout = await this.findOneOrFail(id);
     Object.assign(workout, updateWorkoutDto);
     return await this.workoutRepository.save(workout);
@@ -106,7 +121,8 @@ export class WorkoutsService {
       restSeconds: addWorkoutExerciseDto.restSeconds,
     });
 
-    const savedWorkoutExercise = await this.workoutExerciseRepository.save(workoutExercise);
+    const savedWorkoutExercise =
+      await this.workoutExerciseRepository.save(workoutExercise);
 
     // Create sets if provided
     if (addWorkoutExerciseDto.sets && addWorkoutExerciseDto.sets.length > 0) {
@@ -167,10 +183,35 @@ export class WorkoutsService {
    * @throws BadRequestException if participant already exists
    */
   async addParticipant(
+    userId: string,
     workoutId: string,
     addParticipantDto: AddParticipantDto,
   ): Promise<WorkoutParticipant> {
-    await this.findOneOrFail(workoutId);
+    const workout = await this.findOneOrFail(workoutId);
+
+    if (addParticipantDto.userId === userId) {
+      throw new BadRequestException(
+        'Workout creator is already a participant by default',
+      );
+    }
+
+    if (workout.createdById !== userId) {
+      throw new BadRequestException(
+        'Only the creator of the workout can add participants',
+      );
+    }
+
+    const existingParticipants = await this.workoutParticipantRepository.find({
+      where: {
+        workoutId,
+      },
+    });
+
+    if (existingParticipants.length >= this.MAX_PARTICIPANTS_PER_WORKOUT) {
+      throw new BadRequestException(
+        'Cannot add more participants: workout has reached the maximum limit of 25 participants',
+      );
+    }
 
     // TODO: Check friendship status before allowing participant to be added
     // Verify that the user being added is either:
@@ -179,12 +220,9 @@ export class WorkoutsService {
     // 3. Has been explicitly invited to the workout
 
     // Check if participant already exists
-    const existingParticipant = await this.workoutParticipantRepository.findOne({
-      where: {
-        workoutId,
-        userId: addParticipantDto.userId,
-      },
-    });
+    const existingParticipant = existingParticipants.some(
+      (participant) => participant.userId === addParticipantDto.userId,
+    );
 
     if (existingParticipant) {
       throw new BadRequestException(
@@ -349,12 +387,14 @@ export class WorkoutsService {
    * @returns Promise<void>
    * @throws NotFoundException if workout doesn't exist
    */
-  async remove(id: string): Promise<void> {
-    // TODO: Only allow deletion by the workout creator
-    // Add authorization check to verify that the user requesting deletion
-    // is the same as workout.createdById
-
+  async remove(userId: string, id: string): Promise<void> {
     const workout = await this.findOneOrFail(id);
+
+    if (workout.createdById !== userId) {
+      throw new BadRequestException(
+        'Only the creator of the workout can delete it',
+      );
+    }
 
     // All related entities (participants, exercises, sets) will be automatically
     // deleted due to CASCADE on delete constraints

@@ -5,5 +5,14 @@ export interface RequestWithToken extends Request {
 }
 
 export interface RequestWithUser extends Request {
-  user: User;
+  user?: User | null;
+}
+
+export interface RequestWithEmail extends Request {
+  email: string;
+}
+
+export interface RequestWithTokenAndEmail extends Request {
+  token: string;
+  email: string;
 }

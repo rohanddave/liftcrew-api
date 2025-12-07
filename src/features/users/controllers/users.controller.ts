@@ -9,11 +9,17 @@ import {
   Req,
   HttpCode,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
 import { UsersService } from '../services/users.service';
-import { RequestWithUser } from 'src/common/types/request.type';
+import {
+  RequestWithEmail,
+  RequestWithUser,
+} from 'src/common/types/request.type';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
+import { Protected, Public } from 'src/common/decorators';
+import { SocialTokenGuard } from 'src/features/auth/guards/social-token.guard';
 
 /**
  * Controller for managing user-related operations.
@@ -32,13 +38,7 @@ export class UsersController {
   @Get('me')
   async getMe(@Req() request: RequestWithUser) {
     console.log('Authenticated User: ', request.user);
-
-    const user = await this.usersService.findOneByEmailOrFail(
-      request.user.email,
-    );
-
-    console.log('Retrieved User age: ', user.age);
-    return user;
+    return request.user;
   }
 
   /**
@@ -56,19 +56,15 @@ export class UsersController {
    * @param createUserDto - The data transfer object containing user details
    * @returns Promise<User> The newly created user entity
    */
+  @Protected()
   @Post()
   async create(
-    @Req() request: RequestWithUser,
+    @Req() request: RequestWithEmail,
     @Body() createUserDto: CreateUserDto,
   ) {
-    const { email, phoneNumber, name } = request.user;
-    const requiredFields = { email, phoneNumber, name };
-
-    const createdUser = await this.usersService.create(
-      createUserDto,
-      requiredFields,
-    );
-
+    const { email } = request;
+    const createdUser = await this.usersService.create(createUserDto, email);
+    console.log('Created User: ', createdUser);
     return createdUser;
   }
 
@@ -85,10 +81,7 @@ export class UsersController {
     @Req() request: RequestWithUser,
     @Body() updateUserDto: UpdateUserDto,
   ) {
-    const user = await this.usersService.findOneByEmailOrFail(
-      request.user.email,
-    );
-    return this.usersService.update(user.id, updateUserDto);
+    return this.usersService.update(request.user.id, updateUserDto);
   }
 
   /**
@@ -101,9 +94,6 @@ export class UsersController {
   @Delete()
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Req() request: RequestWithUser) {
-    const user = await this.usersService.findOneByEmailOrFail(
-      request.user.email,
-    );
-    return this.usersService.remove(user.id);
+    return this.usersService.remove(request.user.id);
   }
 }

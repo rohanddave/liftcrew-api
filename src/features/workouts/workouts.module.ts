@@ -11,9 +11,11 @@ import { ExercisesController } from './controllers/exercises.controller';
 import { MuscleGroupSeedService } from './services/muscle-group-seed.service';
 import { WorkoutsService } from './services/workouts.service';
 import { WorkoutsController } from './controllers/workouts.controller';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
+    UsersModule,
     TypeOrmModule.forFeature([
       MuscleGroup,
       Exercise,

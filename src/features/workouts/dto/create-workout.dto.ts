@@ -35,13 +35,4 @@ export class CreateWorkoutDto {
   @IsOptional()
   @IsEnum(WorkoutStatus)
   status?: WorkoutStatus;
-
-  // TODO: remove this and read from the request authenticated user in the controller
-  /**
-   * User ID of the workout creator.
-   * @example "uuid-here"
-   */
-  @IsNotEmpty()
-  @IsUUID()
-  createdById: string;
 }

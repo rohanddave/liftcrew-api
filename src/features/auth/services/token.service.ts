@@ -119,19 +119,15 @@ export class TokenService {
 
   private validateAndGenerateAccessTokenPayload(decoded: {
     uid: string;
-    email?: string;
-    phone_number?: string;
-    name: string;
+    email: string;
   }): TokenPayload {
-    if (!decoded.uid || (!decoded.email && !decoded.phone_number)) {
+    if (!decoded.uid || !decoded.email) {
       throw new UnauthorizedException('Invalid Firebase token payload');
     }
 
     return {
       id: decoded.uid,
       email: decoded.email,
-      phoneNumber: decoded.phone_number,
-      name: decoded.name,
     };
   }
 
@@ -153,8 +149,6 @@ export class TokenService {
     const payload = this.validateAndGenerateAccessTokenPayload({
       uid: decodedToken.uid,
       email: decodedToken.email,
-      phone_number: decodedToken.phone_number,
-      name: decodedToken.name || '',
     });
 
     console.log('Generated Payload for JWT:', payload);
@@ -227,8 +221,6 @@ export class TokenService {
       const payload = this.validateAndGenerateAccessTokenPayload({
         uid: user.id,
         email: user.email,
-        phone_number: user.phoneNumber,
-        name: user.name,
       });
 
       const newAccessToken = this.generateAccessToken(payload);

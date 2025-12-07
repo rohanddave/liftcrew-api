@@ -4,10 +4,11 @@ import { SocialTokenGuard } from 'src/features/auth/guards/social-token.guard';
 import { RefreshTokenGuard } from 'src/features/auth/guards/refresh-token.guard';
 import {
   RequestWithToken,
+  RequestWithTokenAndEmail,
   RequestWithUser,
 } from 'src/common/types/request.type';
 import { TokenService } from '../services/token.service';
-import { Public } from 'src/common/decorators';
+import { Protected, Public } from 'src/common/decorators';
 import { UsersService } from 'src/features/users/services/users.service';
 
 /**
@@ -22,10 +23,10 @@ export class AuthController {
     private readonly usersService: UsersService,
   ) {}
 
+  @Protected()
   @Get('login')
-  async login(@Req() req: RequestWithUser) {
-    console.log('Login Request User:', req.user);
-    const user = await this.usersService.findOneByEmail(req.user.email);
+  async login(@Req() req: RequestWithTokenAndEmail) {
+    const user = await this.usersService.findOneByEmail(req.email);
     const response = { isNewUser: !user };
     console.log('Login Response:', response);
     return response;

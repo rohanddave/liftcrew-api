@@ -6,10 +6,11 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
-import { IS_PUBLIC_KEY } from 'src/common/decorators';
+import { IS_PROTECTED_KEY, IS_PUBLIC_KEY } from 'src/common/decorators';
 import { TokenValidationStrategy } from 'src/common/interfaces/token-validation.strategy';
 import { getBearerToken } from 'src/common/utils';
 import * as jwt from 'jsonwebtoken';
+import { UsersService } from 'src/features/users/services/users.service';
 
 /**
  * JWT Token Validation Strategy
@@ -85,6 +86,7 @@ export class JWTTokenGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
     private readonly jwtTokenValidation: JWTTokenValidation,
+    private usersService: UsersService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -94,6 +96,11 @@ export class JWTTokenGuard implements CanActivate {
       context.getHandler(),
       context.getClass(),
     ]);
+
+    const isProtected = this.reflector.getAllAndOverride<boolean>(
+      IS_PROTECTED_KEY,
+      [context.getHandler(), context.getClass()],
+    );
 
     // short circuit if route is marked as public
     if (isPublic) {
@@ -113,12 +120,26 @@ export class JWTTokenGuard implements CanActivate {
         throw new UnauthorizedException('Invalid or expired JWT token');
       }
 
-      // Optionally decode and attach the payload to request
+      // Decode the JWT token
       const decoded = await this.jwtTokenValidation.validateAndDecode(token);
       console.log('Decoded JWT Payload:', decoded);
-      if (decoded) {
-        request.user = decoded;
+
+      if (!decoded) {
+        throw new UnauthorizedException('Invalid JWT token');
       }
+
+      request.email = decoded.email;
+
+      console.log(request.method, request.url);
+
+      const user = await this.usersService.findOneByEmail(decoded.email);
+
+      if (!user && !isProtected) {
+        throw new UnauthorizedException('User not found in database');
+      }
+
+      request.user = user;
+      console.log('Authenticated User attached to request:', request.user);
 
       // Return true to allow the request to proceed
       return true;

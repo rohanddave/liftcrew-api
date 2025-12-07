@@ -24,17 +24,8 @@ export class User {
   /**
    * Unique email address of the user.
    */
-  @Column({ unique: true, nullable: true })
-  email?: string | null;
-
-  @Column({ unique: true, nullable: true })
-  phoneNumber?: string | null;
-
-  /**
-   * Full name of the user.
-   */
-  @Column()
-  name: string;
+  @Column({ unique: true })
+  email: string;
 
   /**
    * User's height in centimeters.
