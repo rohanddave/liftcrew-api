@@ -172,6 +172,29 @@
 			"item": [
 				{
 					"name": "Get Current User (Me)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Parse the response body",
+									"const responseJson = pm.response.json();",
+									"",
+									"// Check if id exists in the response",
+									"if (responseJson.id) {",
+									"    // Set the user ID as the userId environment variable",
+									"    pm.environment.set(\"userId\", responseJson.id);",
+									"    console.log(\"User ID has been saved to userId variable:\", responseJson.id);",
+									"} else {",
+									"    console.log(\"No id found in response\");",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -185,7 +208,7 @@
 								"me"
 							]
 						},
-						"description": "Retrieves the currently authenticated user's profile"
+						"description": "Retrieves the currently authenticated user's profile. Automatically saves the user ID to the userId environment variable."
 					},
 					"response": []
 				},
@@ -308,24 +331,16 @@
 							"raw": "{\n  \"followeeId\": \"550e8400-e29b-41d4-a716-446655440001\"\n}"
 						},
 						"url": {
-							"raw": "{{base_url}}/follows/:userId/request",
+							"raw": "{{base_url}}/follows/request",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
 								"follows",
-								":userId",
 								"request"
-							],
-							"variable": [
-								{
-									"key": "userId",
-									"value": "550e8400-e29b-41d4-a716-446655440000",
-									"description": "User ID of the follower (person sending the request)"
-								}
 							]
 						},
-						"description": "Send a follow request to another user. Creates a pending follow relationship."
+						"description": "Send a follow request to another user. Uses the authenticated user's ID from the JWT token as the follower. Creates a pending follow relationship."
 					},
 					"response": []
 				},
@@ -344,24 +359,16 @@
 							"raw": "{\n  \"followerId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}"
 						},
 						"url": {
-							"raw": "{{base_url}}/follows/:userId/accept",
+							"raw": "{{base_url}}/follows/accept",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
 								"follows",
-								":userId",
 								"accept"
-							],
-							"variable": [
-								{
-									"key": "userId",
-									"value": "550e8400-e29b-41d4-a716-446655440001",
-									"description": "User ID of the followee (person accepting the request)"
-								}
 							]
 						},
-						"description": "Accept a pending follow request from another user."
+						"description": "Accept a pending follow request from another user. Uses the authenticated user's ID from the JWT token as the followee (person accepting)."
 					},
 					"response": []
 				},
@@ -380,24 +387,16 @@
 							"raw": "{\n  \"followerId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}"
 						},
 						"url": {
-							"raw": "{{base_url}}/follows/:userId/reject",
+							"raw": "{{base_url}}/follows/reject",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
 								"follows",
-								":userId",
 								"reject"
-							],
-							"variable": [
-								{
-									"key": "userId",
-									"value": "550e8400-e29b-41d4-a716-446655440001",
-									"description": "User ID of the followee (person rejecting the request)"
-								}
 							]
 						},
-						"description": "Reject a pending follow request from another user."
+						"description": "Reject a pending follow request from another user. Uses the authenticated user's ID from the JWT token as the followee (person rejecting)."
 					},
 					"response": []
 				},
@@ -407,22 +406,16 @@
 						"method": "DELETE",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/follows/:userId/unfollow/:followeeId",
+							"raw": "{{base_url}}/follows/unfollow/:followeeId",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
 								"follows",
-								":userId",
 								"unfollow",
 								":followeeId"
 							],
 							"variable": [
-								{
-									"key": "userId",
-									"value": "550e8400-e29b-41d4-a716-446655440000",
-									"description": "User ID of the follower"
-								},
 								{
 									"key": "followeeId",
 									"value": "550e8400-e29b-41d4-a716-446655440001",
@@ -430,7 +423,7 @@
 								}
 							]
 						},
-						"description": "Remove a follow relationship (unfollow a user)."
+						"description": "Remove a follow relationship (unfollow a user). Uses the authenticated user's ID from the JWT token as the follower (person unfollowing)."
 					},
 					"response": []
 				},
@@ -469,8 +462,8 @@
 							"variable": [
 								{
 									"key": "userId",
-									"value": "550e8400-e29b-41d4-a716-446655440000",
-									"description": "User ID"
+									"value": "{{userId}}",
+									"description": "User ID (uses authenticated user's ID from /users/me)"
 								}
 							]
 						},
@@ -513,8 +506,8 @@
 							"variable": [
 								{
 									"key": "userId",
-									"value": "550e8400-e29b-41d4-a716-446655440000",
-									"description": "User ID"
+									"value": "{{userId}}",
+									"description": "User ID (uses authenticated user's ID from /users/me)"
 								}
 							]
 						},
@@ -540,8 +533,8 @@
 							"variable": [
 								{
 									"key": "userId",
-									"value": "550e8400-e29b-41d4-a716-446655440000",
-									"description": "User ID"
+									"value": "{{userId}}",
+									"description": "User ID (uses authenticated user's ID from /users/me)"
 								}
 							]
 						},
@@ -568,8 +561,8 @@
 							"variable": [
 								{
 									"key": "userId",
-									"value": "550e8400-e29b-41d4-a716-446655440000",
-									"description": "User ID of the follower"
+									"value": "{{userId}}",
+									"description": "User ID of the follower (uses authenticated user's ID from /users/me)"
 								},
 								{
 									"key": "targetUserId",
