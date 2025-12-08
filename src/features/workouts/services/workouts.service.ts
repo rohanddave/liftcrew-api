@@ -60,7 +60,13 @@ export class WorkoutsService {
   async findOneOrFail(id: string): Promise<Workout> {
     const workout = await this.workoutRepository.findOne({
       where: { id },
-      relations: ['createdBy', 'participants', 'exercises', 'exercises.sets'],
+      relations: [
+        'createdBy',
+        'participants',
+        'exercises',
+        'exercises.exercise',
+        'exercises.sets',
+      ],
     });
 
     if (!workout) {

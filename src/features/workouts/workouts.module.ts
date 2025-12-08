@@ -9,6 +9,7 @@ import { Workout } from './entities/workout.entity';
 import { ExercisesService } from './services/exercises.service';
 import { ExercisesController } from './controllers/exercises.controller';
 import { MuscleGroupSeedService } from './services/muscle-group-seed.service';
+import { ExerciseSeedService } from './services/exercise-seed.service';
 import { WorkoutsService } from './services/workouts.service';
 import { WorkoutsController } from './controllers/workouts.controller';
 import { UsersModule } from '../users/users.module';
@@ -26,7 +27,7 @@ import { UsersModule } from '../users/users.module';
     ]),
   ],
   controllers: [ExercisesController, WorkoutsController],
-  providers: [ExercisesService, WorkoutsService, MuscleGroupSeedService],
+  providers: [ExercisesService, WorkoutsService, MuscleGroupSeedService, ExerciseSeedService],
   exports: [ExercisesService, WorkoutsService],
 })
 export class WorkoutsModule {}
