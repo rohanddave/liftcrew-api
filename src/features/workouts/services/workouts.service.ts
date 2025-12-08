@@ -404,7 +404,7 @@ export class WorkoutsService {
 
     return await this.workoutRepository.find({
       where: whereClause,
-      relations: ['createdBy', 'participants', 'exercises'],
+      relations: ['createdBy'],
       order: {
         startedAt: 'ASC',
       },
