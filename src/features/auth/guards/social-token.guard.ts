@@ -14,7 +14,6 @@ export class SocialTokenGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    console.log('SocialTokenGuard: canActivate called');
     const request = context.switchToHttp().getRequest();
     const authorization = request.headers.authorization;
 
@@ -26,8 +25,6 @@ export class SocialTokenGuard implements CanActivate {
       const decoded =
         await this.firebaseSocialTokenValidation.validateAndDecode(token);
 
-      console.log('Decoded Firebase Token Payload:', decoded);
-
       if (!decoded) {
         throw new UnauthorizedException('Invalid or expired Firebase token');
       }
@@ -36,7 +33,6 @@ export class SocialTokenGuard implements CanActivate {
       request.token = token;
       // Attach decoded token info to request for further use
       request.email = decoded.email;
-      console.log('attaching decoded user to request:', decoded);
 
       // Return true to allow the request to proceed
       return true;

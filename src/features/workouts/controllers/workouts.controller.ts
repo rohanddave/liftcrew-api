@@ -30,14 +30,15 @@ export class WorkoutsController {
 
   /**
    * Retrieves workouts for the authenticated user with optional date range filtering.
-   * By default, returns upcoming workouts (from today onwards).
+   * If no query parameters provided, returns all workouts for the user.
    * @param request - Request with authenticated user
    * @param query - Optional query parameters for date range filtering
-   * @returns Promise<Workout[]> Array of workout entities
+   * @returns Promise<Workout[]> Array of workout entities ordered by startedAt
    *
    * @example
-   * GET /workouts - Returns upcoming workouts (from today onwards)
+   * GET /workouts - Returns all workouts for the user
    * GET /workouts?startDate=2025-12-01T00:00:00Z - Returns workouts from Dec 1st onwards
+   * GET /workouts?endDate=2025-12-31T23:59:59Z - Returns workouts up to Dec 31st
    * GET /workouts?startDate=2025-12-01T00:00:00Z&endDate=2025-12-31T23:59:59Z - Returns workouts in December
    */
   @Get()

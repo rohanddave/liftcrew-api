@@ -1021,7 +1021,7 @@
 			"name": "Workouts",
 			"item": [
 				{
-					"name": "Get All Workouts (Upcoming)",
+					"name": "Get All Workouts",
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -1034,7 +1034,32 @@
 								"workouts"
 							]
 						},
-						"description": "Retrieves upcoming workouts for the authenticated user (from today onwards). Results are ordered by startedAt date in ascending order."
+						"description": "Retrieves all workouts for the authenticated user. Results are ordered by startedAt date in ascending order. Use query parameters to filter by date range."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Upcoming Workouts",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/workouts?startDate=2025-12-07T00:00:00Z",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"workouts"
+							],
+							"query": [
+								{
+									"key": "startDate",
+									"value": "2025-12-07T00:00:00Z",
+									"description": "Start date set to today to get upcoming workouts"
+								}
+							]
+						},
+						"description": "Retrieves upcoming workouts from today onwards by setting startDate to today's date."
 					},
 					"response": []
 				},

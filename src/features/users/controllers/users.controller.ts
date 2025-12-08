@@ -37,7 +37,6 @@ export class UsersController {
    */
   @Get('me')
   async getMe(@Req() request: RequestWithUser) {
-    console.log('Authenticated User: ', request.user);
     return request.user;
   }
 

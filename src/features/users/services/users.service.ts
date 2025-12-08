@@ -58,9 +58,7 @@ export class UsersService {
    * @throws EntityNotFoundError if no user exists with the given ID
    */
   async findOneByEmail(email: string): Promise<User | null> {
-    console.log('Finding user by email:', email);
     const user = await this.userRepository.findOneBy({ email });
-    console.log('Found user:', user);
     return user;
   }
 

@@ -110,8 +110,6 @@ export class TokenService {
       expiresAt,
     });
 
-    console.log('Storing Refresh Token Entity:', refreshTokenEntity);
-
     await this.refreshTokenRepository.save(refreshTokenEntity);
 
     return refreshToken;
@@ -143,31 +141,21 @@ export class TokenService {
     const decodedToken =
       await this.firebaseAuthService.verifyIdToken(firebaseToken);
 
-    console.log('Decoded Firebase Token:', decodedToken);
-
     // Extract user information from the decoded token
     const payload = this.validateAndGenerateAccessTokenPayload({
       uid: decodedToken.uid,
       email: decodedToken.email,
     });
 
-    console.log('Generated Payload for JWT:', payload);
-
     // Generate application-specific JWT token
     const appToken = this.generateAccessToken(payload);
-
-    console.log('Generated App JWT Token:', appToken);
 
     // Generate and store refresh token
     const refreshPayload: RefreshTokenPayload = {
       email: decodedToken.email || '',
     };
 
-    console.log('Generating Refresh Token with Payload:', refreshPayload);
-
     const refreshToken = await this.generateRefreshToken(refreshPayload);
-
-    console.log('Generated Refresh Token:', refreshToken);
 
     return {
       access_token: appToken,

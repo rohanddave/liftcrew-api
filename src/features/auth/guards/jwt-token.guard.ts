@@ -122,15 +122,12 @@ export class JWTTokenGuard implements CanActivate {
 
       // Decode the JWT token
       const decoded = await this.jwtTokenValidation.validateAndDecode(token);
-      console.log('Decoded JWT Payload:', decoded);
 
       if (!decoded) {
         throw new UnauthorizedException('Invalid JWT token');
       }
 
       request.email = decoded.email;
-
-      console.log(request.method, request.url);
 
       const user = await this.usersService.findOneByEmail(decoded.email);
 
@@ -139,7 +136,6 @@ export class JWTTokenGuard implements CanActivate {
       }
 
       request.user = user;
-      console.log('Authenticated User attached to request:', request.user);
 
       // Return true to allow the request to proceed
       return true;

@@ -373,7 +373,7 @@ export class WorkoutsService {
 
   /**
    * Retrieves workouts for a user with optional date range filtering.
-   * By default, returns upcoming workouts (from today onwards).
+   * If no query parameters provided, returns all workouts.
    * @param userId - The UUID of the user
    * @param query - Optional query parameters for date filtering
    * @returns Promise<Workout[]> Array of workout entities
@@ -382,28 +382,28 @@ export class WorkoutsService {
     userId: string,
     query?: WorkoutQueryDto,
   ): Promise<Workout[]> {
-    // Determine date range
-    const now = new Date();
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    // Build where clause
+    const whereClause: any = { createdById: userId };
 
-    const startDate = query?.startDate ? new Date(query.startDate) : startOfToday;
-    const endDate = query?.endDate ? new Date(query.endDate) : undefined;
+    // Only apply date filtering if query params are provided
+    if (query?.startDate || query?.endDate) {
+      const startDate = query.startDate ? new Date(query.startDate) : undefined;
+      const endDate = query.endDate ? new Date(query.endDate) : undefined;
 
-    // Build where clause based on date range
-    let dateFilter: any;
-    if (endDate) {
-      // Both start and end date provided - use Between
-      dateFilter = Between(startDate, endDate);
-    } else {
-      // Only start date (or default to today) - use MoreThanOrEqual
-      dateFilter = MoreThanOrEqual(startDate);
+      if (startDate && endDate) {
+        // Both start and end date provided - use Between
+        whereClause.startedAt = Between(startDate, endDate);
+      } else if (startDate) {
+        // Only start date provided - use MoreThanOrEqual
+        whereClause.startedAt = MoreThanOrEqual(startDate);
+      } else if (endDate) {
+        // Only end date provided - use LessThanOrEqual
+        whereClause.startedAt = LessThanOrEqual(endDate);
+      }
     }
 
     return await this.workoutRepository.find({
-      where: {
-        createdById: userId,
-        startedAt: dateFilter,
-      },
+      where: whereClause,
       relations: ['createdBy', 'participants', 'exercises'],
       order: {
         startedAt: 'ASC',
