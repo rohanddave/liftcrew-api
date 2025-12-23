@@ -7,19 +7,20 @@ import {
   Body,
   Param,
   Req,
+  Query,
   HttpCode,
   HttpStatus,
   UseGuards,
 } from '@nestjs/common';
 import { UsersService } from '../services/users.service';
+import { UsersSearchService } from '../services/users-search.service';
 import {
   RequestWithEmail,
   RequestWithUser,
 } from 'src/common/types/request.type';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
-import { Protected, Public } from 'src/common/decorators';
-import { SocialTokenGuard } from 'src/features/auth/guards/social-token.guard';
+import { Protected } from 'src/common/decorators';
 
 /**
  * Controller for managing user-related operations.
@@ -27,7 +28,28 @@ import { SocialTokenGuard } from 'src/features/auth/guards/social-token.guard';
  */
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly usersSearchService: UsersSearchService,
+  ) {}
+
+  /**
+   * Searches for users by username.
+   * @param username - The username query parameter to search for
+   * @returns Promise<User[]> Array of users matching the search criteria
+   */
+  @Get('search')
+  async search(
+    @Req() request: RequestWithUser,
+    @Query('username') username: string,
+  ) {
+    const { user } = request;
+    const users = await this.usersSearchService.searchByUsername(username);
+    // exclude current user
+    // return users.filter((u) => u.id !== user.id);
+    console.log('Searched users:', users);
+    return users;
+  }
 
   /**
    * Retrieves the currently authenticated user's profile.

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { UsersController } from './controllers/users.controller';
 import { UsersService } from './services/users.service';
+import { UsersSearchService } from './services/users-search.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { GymsModule } from '../gyms/gyms.module';
@@ -21,7 +22,7 @@ import { FirebaseModule } from 'src/infra/firebase/firebase.module';
 @Module({
   imports: [FirebaseModule, TypeOrmModule.forFeature([User]), GymsModule],
   controllers: [UsersController],
-  providers: [UsersService],
+  providers: [UsersService, UsersSearchService],
   exports: [UsersService],
 })
 export class UsersModule {}
