@@ -97,8 +97,6 @@ export class FollowsController {
     @Query() paginationDto: PaginationDto,
     @Query('status') status?: FollowStatus,
   ) {
-    console.log('pagination dto: ', paginationDto);
-    console.log('paginationDto.limit type:', typeof paginationDto.limit);
     const result = await this.socialService.getFollowers(
       userId,
       paginationDto.page,
@@ -106,7 +104,7 @@ export class FollowsController {
       status,
     );
 
-    return {
+    const response = {
       data: result.data,
       pagination: {
         page: paginationDto.page,
@@ -115,6 +113,8 @@ export class FollowsController {
         totalPages: Math.ceil(result.total / paginationDto.limit),
       },
     };
+
+    return response;
   }
 
   /**
@@ -152,7 +152,8 @@ export class FollowsController {
    */
   @Get(':userId/stats')
   async getStats(@Param('userId') userId: string) {
-    return this.socialService.getStats(userId);
+    const response = await this.socialService.getStats(userId);
+    return response;
   }
 
   /**
@@ -173,6 +174,7 @@ export class FollowsController {
       return { exists: false, relationship: null };
     }
 
-    return { exists: true, relationship };
+    const response = { exists: true, relationship };
+    return response;
   }
 }

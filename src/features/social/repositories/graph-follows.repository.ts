@@ -7,6 +7,7 @@ import {
 import { Injectable } from '@nestjs/common';
 import { FollowStatus } from '../types';
 import { int } from 'neo4j-driver';
+import { UsersService } from 'src/features/users/services/users.service';
 
 /**
  * Neo4j-based implementation of the FollowsRepository.
@@ -18,14 +19,30 @@ import { int } from 'neo4j-driver';
  */
 @Injectable()
 export class GraphFollowsRepository implements FollowsRepository {
-  constructor(private neo4jService: Neo4jService) {}
+  constructor(
+    private neo4jService: Neo4jService,
+    private usersService: UsersService,
+  ) {}
   /**
    * Creates a follow request between two users with pending status.
+   * Syncs user data from PostgreSQL to Neo4j before creating the relationship.
    */
   async create(followerId: string, followingId: string): Promise<void> {
+    // Fetch user data from PostgreSQL
+    const [follower, following] = await Promise.all([
+      this.usersService.findOne(followerId),
+      this.usersService.findOne(followingId),
+    ]);
+
     const query = `
       MERGE (follower:User {id: $followerId})
+      SET follower.username = $followerUsername,
+          follower.name = $followerName,
+          follower.imageUrl = $followerImageUrl
       MERGE (following:User {id: $followingId})
+      SET following.username = $followingUsername,
+          following.name = $followingName,
+          following.imageUrl = $followingImageUrl
       MERGE (follower)-[r:FOLLOWS]->(following)
       ON CREATE SET r.since = datetime(), r.status = $status
       RETURN r
@@ -33,7 +50,13 @@ export class GraphFollowsRepository implements FollowsRepository {
 
     await this.neo4jService.write(query, {
       followerId,
+      followerUsername: follower?.username || '',
+      followerName: follower?.username || '',
+      followerImageUrl: follower?.imageUrl || null,
       followingId,
+      followingUsername: following?.username || '',
+      followingName: following?.username || '',
+      followingImageUrl: following?.imageUrl || null,
       status: FollowStatus.PENDING,
     });
   }
@@ -297,9 +320,9 @@ export class GraphFollowsRepository implements FollowsRepository {
     });
 
     return {
-      followerCount: result[0]?.followerCount || 0,
-      followingCount: result[0]?.followingCount || 0,
-      pendingRequestsCount: result[0]?.pendingRequestsCount || 0,
+      followerCount: Number(result[0]?.followerCount || 0),
+      followingCount: Number(result[0]?.followingCount || 0),
+      pendingRequestsCount: Number(result[0]?.pendingRequestsCount || 0),
     };
   }
 

@@ -6,6 +6,7 @@ import { SocialService } from './services/social.service';
 import { GraphFollowsRepository } from './repositories/graph-follows.repository';
 import { RelationalFollowsRepository } from './repositories/relational-follows-repository';
 import { FollowsController } from './controllers/follows.controller';
+import { UsersModule } from '../users/users.module';
 
 export interface SocialModuleOptions {
   type: 'graph' | 'relational';
@@ -34,8 +35,7 @@ export class SocialModule {
 
   private static getImports(options: SocialModuleOptions) {
     const imports = [];
-    // TODO: think about this - how to avoid circular dependencies when registering controller routes
-    // imports.push(UsersModule);
+    imports.push(UsersModule);
     // Add imports based on the type of social module
     if (options.type === 'graph') {
       imports.push(Neo4jModule);
