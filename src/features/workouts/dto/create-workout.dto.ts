@@ -1,12 +1,4 @@
-import {
-  IsEnum,
-  IsISO8601,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  IsUUID,
-} from 'class-validator';
-import { WorkoutStatus } from '../entities/workout.entity';
+import { IsOptional, IsString } from 'class-validator';
 
 /**
  * Data Transfer Object for creating a new workout.
@@ -19,20 +11,4 @@ export class CreateWorkoutDto {
   @IsOptional()
   @IsString()
   name?: string;
-
-  /**
-   * Timestamp when the workout started.
-   * @example "2025-12-07T10:00:00Z"
-   */
-  @IsNotEmpty()
-  @IsISO8601()
-  startedAt: string;
-
-  /**
-   * Status of the workout.
-   * @example "in_progress"
-   */
-  @IsOptional()
-  @IsEnum(WorkoutStatus)
-  status?: WorkoutStatus;
 }

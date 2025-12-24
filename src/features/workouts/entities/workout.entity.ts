@@ -27,19 +27,6 @@ export class Workout {
   @Column({ nullable: true })
   name?: string;
 
-  @Column({ type: 'timestamp', default: () => 'NOW()' })
-  startedAt: Date;
-
-  @Column({ type: 'timestamp', nullable: true })
-  endedAt?: Date;
-
-  @Column({
-    type: 'enum',
-    enum: WorkoutStatus,
-    default: WorkoutStatus.IN_PROGRESS,
-  })
-  status: WorkoutStatus;
-
   @ManyToOne(() => User)
   @JoinColumn({ name: 'created_by' })
   createdBy: User;

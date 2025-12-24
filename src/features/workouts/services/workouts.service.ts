@@ -4,17 +4,28 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, MoreThanOrEqual, LessThanOrEqual, Between } from 'typeorm';
+import {
+  Repository,
+  MoreThanOrEqual,
+  LessThanOrEqual,
+  Between,
+  FindOptionsWhere,
+  Equal,
+} from 'typeorm';
 import { Workout } from '../entities/workout.entity';
 import { WorkoutExercise } from '../entities/workout-exercise.entity';
 import { ExerciseSet } from '../entities/set.entity';
-import { WorkoutParticipant } from '../entities/workout-participant.entity';
+import {
+  ParticipantRole,
+  WorkoutParticipant,
+} from '../entities/workout-participant.entity';
 import { CreateWorkoutDto } from '../dto/create-workout.dto';
 import { UpdateWorkoutDto } from '../dto/update-workout.dto';
 import { AddWorkoutExerciseDto } from '../dto/add-workout-exercise.dto';
 import { AddParticipantDto } from '../dto/add-participant.dto';
 import { AddSetDto } from '../dto/add-set.dto';
 import { WorkoutQueryDto } from '../dto/workout-query.dto';
+import { UsersService } from 'src/features/users/services/users.service';
 
 /**
  * Service responsible for managing workout business logic and database operations.
@@ -33,6 +44,7 @@ export class WorkoutsService {
     private readonly exerciseSetRepository: Repository<ExerciseSet>,
     @InjectRepository(WorkoutParticipant)
     private readonly workoutParticipantRepository: Repository<WorkoutParticipant>,
+    private readonly usersService: UsersService,
   ) {}
 
   /**
@@ -44,11 +56,21 @@ export class WorkoutsService {
     createdById: string,
     createWorkoutDto: CreateWorkoutDto,
   ): Promise<Workout> {
-    const workout = this.workoutRepository.create({
+    const workout = await this.workoutRepository.save({
       ...createWorkoutDto,
       createdById,
     });
-    return await this.workoutRepository.save(workout);
+
+    // adding creator as participant
+    const user = await this.usersService.findOneOrFail(createdById);
+    await this.workoutParticipantRepository.save({
+      workoutId: workout.id,
+      userId: createdById,
+      role: ParticipantRole.OWNER,
+      gymId: user.homeGymId,
+    });
+
+    return workout;
   }
 
   /**
@@ -389,7 +411,9 @@ export class WorkoutsService {
     query?: WorkoutQueryDto,
   ): Promise<Workout[]> {
     // Build where clause
-    const whereClause: any = { createdById: userId };
+    const whereClause: FindOptionsWhere<WorkoutParticipant> = {
+      userId: Equal(userId),
+    };
 
     // Only apply date filtering if query params are provided
     if (query?.startDate || query?.endDate) {
@@ -398,23 +422,25 @@ export class WorkoutsService {
 
       if (startDate && endDate) {
         // Both start and end date provided - use Between
-        whereClause.startedAt = Between(startDate, endDate);
+        whereClause.startAt = Between(startDate, endDate);
       } else if (startDate) {
         // Only start date provided - use MoreThanOrEqual
-        whereClause.startedAt = MoreThanOrEqual(startDate);
+        whereClause.startAt = MoreThanOrEqual(startDate);
       } else if (endDate) {
         // Only end date provided - use LessThanOrEqual
-        whereClause.startedAt = LessThanOrEqual(endDate);
+        whereClause.startAt = LessThanOrEqual(endDate);
       }
     }
 
-    return await this.workoutRepository.find({
+    const participations = await this.workoutParticipantRepository.find({
       where: whereClause,
-      relations: ['createdBy'],
-      order: {
-        startedAt: 'ASC',
+      relations: {
+        workout: { createdBy: true },
       },
+      order: { startAt: 'ASC' },
     });
+
+    return participations.map((p) => p.workout);
   }
 
   /**

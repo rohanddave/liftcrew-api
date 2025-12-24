@@ -52,6 +52,12 @@ export class WorkoutParticipant {
   })
   role: ParticipantRole;
 
+  @Column({ type: 'timestamp', nullable: true })
+  startAt?: Date;
+
+  @Column({ type: 'timestamp', nullable: true })
+  finishedAt?: Date;
+
   @Column({ type: 'timestamp', default: () => 'NOW()' })
   joinedAt: Date;
 
