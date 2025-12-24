@@ -213,32 +213,6 @@
 					"response": []
 				},
 				{
-					"name": "Search Users by Username",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/users/search?username=john",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"users",
-								"search"
-							],
-							"query": [
-								{
-									"key": "username",
-									"value": "john",
-									"description": "Username to search for (partial match, case-insensitive)"
-								}
-							]
-						},
-						"description": "Searches for users by username. Performs a case-insensitive partial match search. Excludes the current authenticated user from results."
-					},
-					"response": []
-				},
-				{
 					"name": "Get User by ID",
 					"request": {
 						"method": "GET",
@@ -303,7 +277,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"John Updated Doe\",\n  \"height\": 180,\n  \"weight\": 75,\n  \"imageUrl\": \"https://example.com/profile/john_new.jpg\",\n  \"homeGymId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}"
+							"raw": "{\n  \"name\": \"John Updated Doe\",\n  \"height\": 180,\n  \"weight\": 75,\n  \"birthdate\": \"1998-03-20\",\n  \"imageUrl\": \"https://example.com/profile/john_new.jpg\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/users",
@@ -1342,48 +1316,6 @@
 							]
 						},
 						"description": "Adds a participant to a workout. TODO: Check friendship status before allowing participant to be added"
-					},
-					"response": []
-				},
-				{
-					"name": "Update Participant",
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"startAt\": \"2025-12-07T10:15:00Z\",\n  \"finishedAt\": \"2025-12-07T11:45:00Z\",\n  \"role\": \"participant\",\n  \"gymId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/workouts/:id/participants/:userId",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"workouts",
-								":id",
-								"participants",
-								":userId"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "{{workoutId}}",
-									"description": "Workout UUID"
-								},
-								{
-									"key": "userId",
-									"value": "{{userId}}",
-									"description": "User UUID of the participant to update"
-								}
-							]
-						},
-						"description": "Updates a participant's information in a workout. Can update startAt, finishedAt, role, and gymId. Only the workout creator or the participant themselves can update the participant record."
 					},
 					"response": []
 				},
