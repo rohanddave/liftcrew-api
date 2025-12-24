@@ -206,21 +206,7 @@ export class WorkoutsService {
     addParticipantDto: AddParticipantDto,
   ): Promise<WorkoutParticipant> {
     const workout = await this.findOneOrFail(workoutId);
-    const user = await this.usersService.findOneOrFail(
-      addParticipantDto.userId,
-    );
-
-    if (addParticipantDto.userId === userId) {
-      throw new BadRequestException(
-        'Workout creator is already a participant by default',
-      );
-    }
-
-    if (workout.createdById !== userId) {
-      throw new BadRequestException(
-        'Only the creator of the workout can add participants',
-      );
-    }
+    const user = await this.usersService.findOneOrFail(userId);
 
     const existingParticipants = await this.workoutParticipantRepository.find({
       where: { workoutId },
@@ -234,18 +220,18 @@ export class WorkoutsService {
 
     // Check if participant already exists
     const existingParticipant = existingParticipants.some(
-      (participant) => participant.userId === addParticipantDto.userId,
+      (participant) => participant.userId === userId,
     );
 
     if (existingParticipant) {
       throw new BadRequestException(
-        `User ${addParticipantDto.userId} is already a participant in this workout`,
+        `User ${userId} is already a participant in this workout`,
       );
     }
 
     return await this.workoutParticipantRepository.save({
       workoutId,
-      userId: addParticipantDto.userId,
+      userId,
       role: addParticipantDto.role,
       gymId: addParticipantDto.gymId ?? user.homeGymId, // default to user's home gym
     });
@@ -357,9 +343,7 @@ export class WorkoutsService {
    * @param workoutId - The UUID of the workout
    * @returns Promise<WorkoutParticipant[]> Array of participants with relations
    */
-  async getAllParticipants(
-    workoutId: string,
-  ): Promise<WorkoutParticipant[]> {
+  async getAllParticipants(workoutId: string): Promise<WorkoutParticipant[]> {
     const participants = await this.workoutParticipantRepository.find({
       where: { workoutId },
       relations: { user: true, gym: true },
