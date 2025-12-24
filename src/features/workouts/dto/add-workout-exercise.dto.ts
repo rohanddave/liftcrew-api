@@ -158,13 +158,4 @@ export class AddWorkoutExerciseDto {
   @IsInt()
   @Min(0)
   restSeconds?: number;
-
-  /**
-   * Array of sets for this exercise.
-   */
-  @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => SetInfoDto)
-  sets?: SetInfoDto[];
 }

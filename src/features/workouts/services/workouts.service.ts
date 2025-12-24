@@ -153,18 +153,6 @@ export class WorkoutsService {
     const savedWorkoutExercise =
       await this.workoutExerciseRepository.save(workoutExercise);
 
-    // Create sets if provided
-    if (addWorkoutExerciseDto.sets && addWorkoutExerciseDto.sets.length > 0) {
-      const sets = addWorkoutExerciseDto.sets.map((setDto) =>
-        this.exerciseSetRepository.create({
-          workoutExerciseId: savedWorkoutExercise.id,
-          ...setDto,
-        }),
-      );
-
-      await this.exerciseSetRepository.save(sets);
-    }
-
     // Return the workout exercise with sets
     return await this.workoutExerciseRepository.findOne({
       where: { id: savedWorkoutExercise.id },
