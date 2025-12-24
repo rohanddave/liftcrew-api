@@ -1310,6 +1310,61 @@
 					"response": []
 				},
 				{
+					"name": "Get All Participants",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/workouts/:id/participants",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"workouts",
+								":id",
+								"participants"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "{{workoutId}}",
+									"description": "Workout UUID"
+								}
+							]
+						},
+						"description": "Gets all participants of a workout with their user and gym information. Only accessible to users who are participants in the workout. Results are ordered by joinedAt date in ascending order."
+					},
+					"response": []
+				},
+				{
+					"name": "Get My Participation",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/workouts/:id/participants/me",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"workouts",
+								":id",
+								"participants",
+								"me"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "{{workoutId}}",
+									"description": "Workout UUID"
+								}
+							]
+						},
+						"description": "Gets the authenticated user's participation record in a specific workout. Returns the participant record with user and gym relations, or null if the user is not participating in this workout."
+					},
+					"response": []
+				},
+				{
 					"name": "Add Participant",
 					"request": {
 						"method": "POST",
