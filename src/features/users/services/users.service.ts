@@ -105,6 +105,12 @@ export class UsersService {
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
     // First, verify the user exists (throws EntityNotFoundError if not found)
     const user = await this.findOneOrFail(id);
+
+    // Validate that the gym exists if homeGymId is being updated
+    if (updateUserDto.homeGymId) {
+      await this.gymsService.findOneOrFail(updateUserDto.homeGymId);
+    }
+
     // Merge the updates into the existing user entity
     Object.assign(user, updateUserDto);
     // Save and return the updated user

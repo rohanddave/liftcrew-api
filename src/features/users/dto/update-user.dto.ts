@@ -5,6 +5,7 @@ import {
   IsOptional,
   IsString,
   IsUrl,
+  IsUUID,
 } from 'class-validator';
 
 /**
@@ -44,4 +45,12 @@ export class UpdateUserDto {
   @IsOptional()
   @IsUrl()
   imageUrl?: string;
+
+  /**
+   * UUID of the user's home gym.
+   * @example "123e4567-e89b-12d3-a456-426614174000"
+   */
+  @IsOptional()
+  @IsUUID()
+  homeGymId?: string;
 }
