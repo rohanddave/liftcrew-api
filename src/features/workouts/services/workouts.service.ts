@@ -121,7 +121,7 @@ export class WorkoutsService {
    * @returns Promise<WorkoutExercise> The created workout exercise with sets
    * @throws NotFoundException if workout doesn't exist
    */
-  async addExerciseWithSets(
+  async addExercise(
     workoutId: string,
     addWorkoutExerciseDto: AddWorkoutExerciseDto,
   ): Promise<WorkoutExercise> {

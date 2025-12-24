@@ -42,10 +42,7 @@ export class WorkoutsController {
    * GET /workouts?startDate=2025-12-01T00:00:00Z&endDate=2025-12-31T23:59:59Z - Returns workouts in December
    */
   @Get()
-  findAll(
-    @Req() request: RequestWithUser,
-    @Query() query: WorkoutQueryDto,
-  ) {
+  findAll(@Req() request: RequestWithUser, @Query() query: WorkoutQueryDto) {
     const { user } = request;
     return this.workoutsService.findAllForUser(user.id, query);
   }
@@ -158,10 +155,7 @@ export class WorkoutsController {
     @Param('id') workoutId: string,
     @Body() addWorkoutExerciseDto: AddWorkoutExerciseDto,
   ) {
-    return this.workoutsService.addExerciseWithSets(
-      workoutId,
-      addWorkoutExerciseDto,
-    );
+    return this.workoutsService.addExercise(workoutId, addWorkoutExerciseDto);
   }
 
   /**
