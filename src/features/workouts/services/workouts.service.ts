@@ -206,6 +206,9 @@ export class WorkoutsService {
     addParticipantDto: AddParticipantDto,
   ): Promise<WorkoutParticipant> {
     const workout = await this.findOneOrFail(workoutId);
+    const user = await this.usersService.findOneOrFail(
+      addParticipantDto.userId,
+    );
 
     if (addParticipantDto.userId === userId) {
       throw new BadRequestException(
@@ -220,9 +223,7 @@ export class WorkoutsService {
     }
 
     const existingParticipants = await this.workoutParticipantRepository.find({
-      where: {
-        workoutId,
-      },
+      where: { workoutId },
     });
 
     if (existingParticipants.length >= this.MAX_PARTICIPANTS_PER_WORKOUT) {
@@ -230,12 +231,6 @@ export class WorkoutsService {
         'Cannot add more participants: workout has reached the maximum limit of 25 participants',
       );
     }
-
-    // TODO: Check friendship status before allowing participant to be added
-    // Verify that the user being added is either:
-    // 1. A friend of the workout creator
-    // 2. The workout creator themselves
-    // 3. Has been explicitly invited to the workout
 
     // Check if participant already exists
     const existingParticipant = existingParticipants.some(
@@ -248,14 +243,12 @@ export class WorkoutsService {
       );
     }
 
-    const participant = this.workoutParticipantRepository.create({
+    return await this.workoutParticipantRepository.save({
       workoutId,
       userId: addParticipantDto.userId,
       role: addParticipantDto.role,
-      gymId: addParticipantDto.gymId,
+      gymId: addParticipantDto.gymId ?? user.homeGymId, // default to user's home gym
     });
-
-    return await this.workoutParticipantRepository.save(participant);
   }
 
   /**
@@ -268,18 +261,10 @@ export class WorkoutsService {
    */
   async removeParticipant(workoutId: string, userId: string): Promise<void> {
     await this.findOneOrFail(workoutId);
-
-    // TODO: Check friendship status and permissions before allowing removal
-    // Verify that:
-    // 1. The requester is the workout creator (can remove anyone except owner)
-    // 2. The requester is removing themselves
-    // 3. Cannot remove the workout owner
+    await this.usersService.findOneOrFail(userId);
 
     const participant = await this.workoutParticipantRepository.findOne({
-      where: {
-        workoutId,
-        userId,
-      },
+      where: { workoutId, userId },
     });
 
     if (!participant) {
@@ -308,12 +293,10 @@ export class WorkoutsService {
     updateParticipantDto: UpdateParticipantDto,
   ): Promise<WorkoutParticipant> {
     await this.findOneOrFail(workoutId);
+    await this.usersService.findOneOrFail(userId);
 
     const participant = await this.workoutParticipantRepository.findOne({
-      where: {
-        workoutId,
-        userId,
-      },
+      where: { workoutId, userId },
     });
 
     if (!participant) {
@@ -327,6 +310,63 @@ export class WorkoutsService {
 
     // Save and return the updated participant
     return await this.workoutParticipantRepository.save(participant);
+  }
+
+  /**
+   * Verifies that a user is a participant in a workout.
+   * Throws a BadRequestException if the user is not a participant.
+   * @param workoutId - The UUID of the workout
+   * @param userId - The UUID of the user to verify
+   * @throws BadRequestException if user is not a participant
+   */
+  async verifyUserIsParticipant(
+    workoutId: string,
+    userId: string,
+  ): Promise<void> {
+    const participant = await this.workoutParticipantRepository.findOne({
+      where: { workoutId, userId },
+    });
+
+    if (!participant) {
+      throw new BadRequestException(
+        'You must be a participant in this workout to perform this action',
+      );
+    }
+  }
+
+  /**
+   * Gets the authenticated user's participation in a specific workout.
+   * @param workoutId - The UUID of the workout
+   * @param userId - The UUID of the authenticated user
+   * @returns Promise<WorkoutParticipant | null> The participant record with relations, or null if not participating
+   */
+  async getMyParticipation(
+    workoutId: string,
+    userId: string,
+  ): Promise<WorkoutParticipant | null> {
+    const participant = await this.workoutParticipantRepository.findOne({
+      where: { workoutId, userId },
+      relations: { user: true, gym: true },
+    });
+
+    return participant;
+  }
+
+  /**
+   * Gets all participants of a workout with their user and gym information.
+   * @param workoutId - The UUID of the workout
+   * @returns Promise<WorkoutParticipant[]> Array of participants with relations
+   */
+  async getAllParticipants(
+    workoutId: string,
+  ): Promise<WorkoutParticipant[]> {
+    const participants = await this.workoutParticipantRepository.find({
+      where: { workoutId },
+      relations: { user: true, gym: true },
+      order: { joinedAt: 'ASC' },
+    });
+
+    return participants;
   }
 
   /**

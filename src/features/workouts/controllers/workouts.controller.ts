@@ -102,6 +102,39 @@ export class WorkoutsController {
   // ==================== Participant Management ====================
 
   /**
+   * Gets all participants of a workout with their user and gym information.
+   * Only accessible to users who are participants in the workout.
+   * @param request - Request with authenticated user
+   * @param workoutId - The UUID of the workout
+   * @returns Promise<WorkoutParticipant[]> Array of participants with user and gym relations
+   * @throws BadRequestException if user is not a participant
+   */
+  @Get(':id/participants')
+  async getAllParticipants(
+    @Req() request: RequestWithUser,
+    @Param('id') workoutId: string,
+  ) {
+    const { user } = request;
+    await this.workoutsService.verifyUserIsParticipant(workoutId, user.id);
+    return this.workoutsService.getAllParticipants(workoutId);
+  }
+
+  /**
+   * Gets the authenticated user's participation in a specific workout.
+   * @param request - Request with authenticated user
+   * @param workoutId - The UUID of the workout
+   * @returns Promise<WorkoutParticipant | null> The participant record with user and gym relations, or null if not participating
+   */
+  @Get(':id/participants/me')
+  getMyParticipation(
+    @Req() request: RequestWithUser,
+    @Param('id') workoutId: string,
+  ) {
+    const { user } = request;
+    return this.workoutsService.getMyParticipation(workoutId, user.id);
+  }
+
+  /**
    * Adds a participant to a workout.
    * TODO: Check friendship status before allowing participant to be added
    * @param workoutId - The UUID of the workout
@@ -158,10 +191,11 @@ export class WorkoutsController {
    */
   @Delete(':id/participants/:userId')
   @HttpCode(HttpStatus.NO_CONTENT)
-  removeParticipant(
+  async removeParticipant(
     @Param('id') workoutId: string,
     @Param('userId') userId: string,
   ) {
+    await this.workoutsService.verifyUserIsParticipant(workoutId, userId);
     return this.workoutsService.removeParticipant(workoutId, userId);
   }
 
