@@ -16,6 +16,7 @@ import { CreateWorkoutDto } from '../dto/create-workout.dto';
 import { UpdateWorkoutDto } from '../dto/update-workout.dto';
 import { AddWorkoutExerciseDto } from '../dto/add-workout-exercise.dto';
 import { AddParticipantDto } from '../dto/add-participant.dto';
+import { UpdateParticipantDto } from '../dto/update-participant.dto';
 import { AddSetDto } from '../dto/add-set.dto';
 import { WorkoutQueryDto } from '../dto/workout-query.dto';
 import { RequestWithUser } from 'src/common/types/request.type';
@@ -120,6 +121,30 @@ export class WorkoutsController {
       user.id,
       workoutId,
       addParticipantDto,
+    );
+  }
+
+  /**
+   * Updates a participant's information in a workout.
+   * Can update startAt, finishedAt, role, and gymId.
+   * @param request - Request with authenticated user
+   * @param workoutId - The UUID of the workout
+   * @param updateParticipantDto - The data transfer object containing updated participant information
+   * @returns Promise<WorkoutParticipant> The updated participant entity
+   * @throws NotFoundException if workout or participant doesn't exist
+   * @throws BadRequestException if unauthorized to update
+   */
+  @Put(':id/participants')
+  updateParticipant(
+    @Req() request: RequestWithUser,
+    @Param('id') workoutId: string,
+    @Body() updateParticipantDto: UpdateParticipantDto,
+  ) {
+    const { user } = request;
+    return this.workoutsService.updateParticipant(
+      workoutId,
+      user.id,
+      updateParticipantDto,
     );
   }
 

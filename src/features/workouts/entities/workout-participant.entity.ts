@@ -60,7 +60,4 @@ export class WorkoutParticipant {
 
   @Column({ type: 'timestamp', default: () => 'NOW()' })
   joinedAt: Date;
-
-  @Column({ type: 'timestamp', nullable: true })
-  leftAt?: Date;
 }

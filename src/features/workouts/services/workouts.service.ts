@@ -23,6 +23,7 @@ import { CreateWorkoutDto } from '../dto/create-workout.dto';
 import { UpdateWorkoutDto } from '../dto/update-workout.dto';
 import { AddWorkoutExerciseDto } from '../dto/add-workout-exercise.dto';
 import { AddParticipantDto } from '../dto/add-participant.dto';
+import { UpdateParticipantDto } from '../dto/update-participant.dto';
 import { AddSetDto } from '../dto/add-set.dto';
 import { WorkoutQueryDto } from '../dto/workout-query.dto';
 import { UsersService } from 'src/features/users/services/users.service';
@@ -287,9 +288,45 @@ export class WorkoutsService {
       );
     }
 
-    // Mark the participant as having left
-    participant.leftAt = new Date();
-    await this.workoutParticipantRepository.save(participant);
+    // remove the leaving participant
+    await this.workoutParticipantRepository.remove(participant);
+  }
+
+  /**
+   * Updates a participant's information in a workout.
+   * @param requesterId - The UUID of the user making the request
+   * @param workoutId - The UUID of the workout
+   * @param userId - The UUID of the participant to update
+   * @param updateParticipantDto - The data transfer object containing updated participant information
+   * @returns Promise<WorkoutParticipant> The updated participant entity
+   * @throws NotFoundException if workout or participant doesn't exist
+   * @throws BadRequestException if unauthorized to update
+   */
+  async updateParticipant(
+    workoutId: string,
+    userId: string,
+    updateParticipantDto: UpdateParticipantDto,
+  ): Promise<WorkoutParticipant> {
+    await this.findOneOrFail(workoutId);
+
+    const participant = await this.workoutParticipantRepository.findOne({
+      where: {
+        workoutId,
+        userId,
+      },
+    });
+
+    if (!participant) {
+      throw new NotFoundException(
+        `Participant with user ID ${userId} not found in workout ${workoutId}`,
+      );
+    }
+
+    // Apply updates
+    Object.assign(participant, updateParticipantDto);
+
+    // Save and return the updated participant
+    return await this.workoutParticipantRepository.save(participant);
   }
 
   /**
