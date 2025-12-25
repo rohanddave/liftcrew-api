@@ -11,6 +11,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { JWTTokenGuard } from './features/auth/guards/jwt-token.guard';
 import { SocialModule } from './features/social/social.module';
 import { WorkoutsModule } from './features/workouts/workouts.module';
+import { PostsModule } from './features/posts/posts.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { WorkoutsModule } from './features/workouts/workouts.module';
     GymsModule,
     SocialModule.register({ type: 'graph' }),
     WorkoutsModule,
+    PostsModule,
   ],
   controllers: [],
   providers: [

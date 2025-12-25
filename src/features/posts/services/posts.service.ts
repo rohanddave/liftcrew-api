@@ -1,0 +1,132 @@
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Post } from '../entities/post.entity';
+import { WorkoutsService } from 'src/features/workouts/services/workouts.service';
+import { CreatePostDto } from '../dto/create-post.dto';
+import { UpdatePostDto } from '../dto/update-post.dto';
+
+@Injectable()
+export class PostsService {
+  constructor(
+    @InjectRepository(Post)
+    private readonly postRepository: Repository<Post>,
+    private readonly workoutsService: WorkoutsService,
+  ) {}
+
+  /**
+   * Creates a new post from a workout participation.
+   * Validates that the user is a participant in the workout before creating the post.
+   * @param userId - The UUID of the user creating the post
+   * @param createPostDto - The data transfer object containing post information
+   * @returns Promise<Post> The newly created post entity
+   * @throws NotFoundException if workout participation doesn't exist
+   */
+  async create(userId: string, createPostDto: CreatePostDto): Promise<Post> {
+    // Fetch and validate the workout participation
+    const workoutParticipant = await this.workoutsService.getMyParticipation(
+      createPostDto.workoutId,
+      userId,
+    );
+
+    if (!workoutParticipant) {
+      throw new NotFoundException(
+        `You are not a participant in workout ${createPostDto.workoutId}`,
+      );
+    }
+
+    // Create the post
+    const post = this.postRepository.create({
+      title: createPostDto.title,
+      caption: createPostDto.caption,
+      workoutParticipantId: workoutParticipant.id,
+    });
+
+    return await this.postRepository.save(post);
+  }
+
+  /**
+   * Finds a single post by its unique identifier.
+   * @param id - The UUID of the post to find
+   * @returns Promise<Post> The post entity with relations
+   * @throws NotFoundException if no post exists with the given ID
+   */
+  async findOneOrFail(id: string): Promise<Post> {
+    const post = await this.postRepository.findOne({
+      where: { id },
+      relations: ['workoutParticipant', 'workoutParticipant.user'],
+    });
+
+    if (!post) {
+      throw new NotFoundException(`Post with ID ${id} not found`);
+    }
+
+    return post;
+  }
+
+  /**
+   * Updates an existing post's information.
+   * Only allows the post creator to update their own posts.
+   * @param id - The UUID of the post to update
+   * @param userId - The UUID of the user making the request
+   * @param updatePostDto - The data transfer object containing updated post information
+   * @returns Promise<Post> The updated post entity
+   * @throws NotFoundException if post doesn't exist
+   * @throws BadRequestException if user is not the post creator
+   */
+  async update(
+    id: string,
+    userId: string,
+    updatePostDto: UpdatePostDto,
+  ): Promise<Post> {
+    const post = await this.postRepository.findOne({
+      where: { id },
+      relations: ['workoutParticipant'],
+    });
+
+    if (!post) {
+      throw new NotFoundException(`Post with ID ${id} not found`);
+    }
+
+    // Verify the user is the post creator
+    if (post.workoutParticipant.userId !== userId) {
+      throw new BadRequestException('You can only update your own posts');
+    }
+
+    // Apply updates
+    Object.assign(post, updatePostDto);
+
+    return await this.postRepository.save(post);
+  }
+
+  /**
+   * Deletes a post from the database.
+   * Only allows the post creator to delete their own posts.
+   * @param id - The UUID of the post to delete
+   * @param userId - The UUID of the user making the request
+   * @returns Promise<void>
+   * @throws NotFoundException if post doesn't exist
+   * @throws BadRequestException if user is not the post creator
+   */
+  async remove(id: string, userId: string): Promise<void> {
+    const post = await this.postRepository.findOne({
+      where: { id },
+      relations: ['workoutParticipant'],
+    });
+
+    if (!post) {
+      throw new NotFoundException(`Post with ID ${id} not found`);
+    }
+
+    // Verify the user is the post creator
+    if (post.workoutParticipant.userId !== userId) {
+      throw new BadRequestException('You can only delete your own posts');
+    }
+
+    await this.postRepository.remove(post);
+  }
+}
