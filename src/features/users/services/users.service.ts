@@ -129,4 +129,14 @@ export class UsersService {
     // Remove the user from the database
     await this.userRepository.remove(user);
   }
+
+  /**
+   * Increments the kudos count for a user.
+   * @param id - The UUID of the user
+   * @returns Promise<void>
+   * @throws EntityNotFoundError if no user exists with the given ID
+   */
+  async incrementKudosCount(id: string): Promise<void> {
+    await this.userRepository.increment({ id }, 'kudosCount', 1);
+  }
 }

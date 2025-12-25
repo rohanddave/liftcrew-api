@@ -67,6 +67,12 @@ export class User {
   @Column({ nullable: true })
   homeGymId: string;
 
+  /**
+   * Total kudos points received on user's posts.
+   */
+  @Column({ default: 0 })
+  kudosCount: number;
+
   // Non-persisted field - calculated on load
   age: number;
 

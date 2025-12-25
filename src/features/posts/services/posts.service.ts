@@ -6,7 +6,9 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Post } from '../entities/post.entity';
+import { Kudos } from '../entities/kudos.entity';
 import { WorkoutsService } from 'src/features/workouts/services/workouts.service';
+import { UsersService } from 'src/features/users/services/users.service';
 import { CreatePostDto } from '../dto/create-post.dto';
 import { UpdatePostDto } from '../dto/update-post.dto';
 
@@ -15,7 +17,10 @@ export class PostsService {
   constructor(
     @InjectRepository(Post)
     private readonly postRepository: Repository<Post>,
+    @InjectRepository(Kudos)
+    private readonly kudosRepository: Repository<Kudos>,
     private readonly workoutsService: WorkoutsService,
+    private readonly usersService: UsersService,
   ) {}
 
   /**
@@ -44,6 +49,7 @@ export class PostsService {
       title: createPostDto.title,
       caption: createPostDto.caption,
       workoutParticipantId: workoutParticipant.id,
+      createdById: userId,
     });
 
     return await this.postRepository.save(post);
@@ -85,7 +91,6 @@ export class PostsService {
   ): Promise<Post> {
     const post = await this.postRepository.findOne({
       where: { id },
-      relations: ['workoutParticipant'],
     });
 
     if (!post) {
@@ -93,7 +98,7 @@ export class PostsService {
     }
 
     // Verify the user is the post creator
-    if (post.workoutParticipant.userId !== userId) {
+    if (post.createdById !== userId) {
       throw new BadRequestException('You can only update your own posts');
     }
 
@@ -115,7 +120,6 @@ export class PostsService {
   async remove(id: string, userId: string): Promise<void> {
     const post = await this.postRepository.findOne({
       where: { id },
-      relations: ['workoutParticipant'],
     });
 
     if (!post) {
@@ -123,10 +127,58 @@ export class PostsService {
     }
 
     // Verify the user is the post creator
-    if (post.workoutParticipant.userId !== userId) {
+    if (post.createdById !== userId) {
       throw new BadRequestException('You can only delete your own posts');
     }
 
     await this.postRepository.remove(post);
+  }
+
+  /**
+   * Gives kudos to a post.
+   * Validates that the post exists and increments the kudos count for the post creator.
+   * Prevents users from giving kudos to the same post multiple times.
+   * @param postId - The UUID of the post to give kudos to
+   * @param userId - The UUID of the user giving kudos
+   * @returns Promise<Kudos> The created kudos entity
+   * @throws NotFoundException if post doesn't exist
+   * @throws BadRequestException if user already gave kudos to this post
+   */
+  async giveKudos(postId: string, userId: string): Promise<Kudos> {
+    // Validate the post exists
+    const post = await this.postRepository.findOne({
+      where: { id: postId },
+    });
+
+    if (!post) {
+      throw new NotFoundException(`Post with ID ${postId} not found`);
+    }
+
+    // Check if user already gave kudos to this post
+    const existingKudos = await this.kudosRepository.findOne({
+      where: {
+        postId,
+        givenById: userId,
+      },
+    });
+
+    if (existingKudos) {
+      throw new BadRequestException(
+        'You have already given kudos to this post',
+      );
+    }
+
+    // Create the kudos
+    const kudos = this.kudosRepository.create({
+      postId,
+      givenById: userId,
+    });
+
+    const savedKudos = await this.kudosRepository.save(kudos);
+
+    // Increment the kudos count for the post creator
+    await this.usersService.incrementKudosCount(post.createdById);
+
+    return savedKudos;
   }
 }

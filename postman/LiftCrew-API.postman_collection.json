@@ -1782,6 +1782,32 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "Give Kudos to Post",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/posts/:id/kudos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "posts",
+                ":id",
+                "kudos"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{postId}}",
+                  "description": "Post UUID"
+                }
+              ]
+            }
+          },
+          "response": []
         }
       ]
     }

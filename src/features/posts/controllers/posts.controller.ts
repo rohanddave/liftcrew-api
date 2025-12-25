@@ -83,4 +83,20 @@ export class PostsController {
     const { user } = request;
     return this.postsService.remove(id, user.id);
   }
+
+  /**
+   * Gives kudos to a post.
+   * Validates that the post exists and increments the kudos count for the post creator.
+   * Prevents users from giving kudos to the same post multiple times.
+   * @param request - Request with authenticated user
+   * @param id - The UUID of the post to give kudos to
+   * @returns Promise<Kudos> The created kudos entity
+   * @throws NotFoundException if post with given ID is not found
+   * @throws BadRequestException if user already gave kudos to this post
+   */
+  @Post(':id/kudos')
+  giveKudos(@Req() request: RequestWithUser, @Param('id') id: string) {
+    const { user } = request;
+    return this.postsService.giveKudos(id, user.id);
+  }
 }
