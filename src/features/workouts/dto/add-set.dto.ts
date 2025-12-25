@@ -16,12 +16,12 @@ import { SetType } from '../entities/set.entity';
  */
 export class AddSetDto {
   /**
-   * User ID who performed this set.
+   * Participant ID who performed this set.
    * @example "uuid-here"
    */
   @IsNotEmpty()
   @IsUUID()
-  performedById: string;
+  participantId: string;
 
   /**
    * Set number in the exercise sequence.

@@ -3,12 +3,14 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
+  OneToMany,
   JoinColumn,
   Unique,
 } from 'typeorm';
 import { User } from 'src/features/users/entities/user.entity';
 import { Workout } from './workout.entity';
 import { Gym } from 'src/features/gyms/entities/gym.entity';
+import { ExerciseSet } from './set.entity';
 
 export enum ParticipantRole {
   OWNER = 'owner',
@@ -60,4 +62,7 @@ export class WorkoutParticipant {
 
   @Column({ type: 'timestamp', default: () => 'NOW()' })
   joinedAt: Date;
+
+  @OneToMany(() => ExerciseSet, (set) => set.participant)
+  sets: ExerciseSet[];
 }

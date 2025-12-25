@@ -7,7 +7,7 @@ import {
   Unique,
 } from 'typeorm';
 import { WorkoutExercise } from './workout-exercise.entity';
-import { User } from 'src/features/users/entities/user.entity';
+import { WorkoutParticipant } from './workout-participant.entity';
 
 export enum SetType {
   WARMUP = 'warmup',
@@ -17,7 +17,7 @@ export enum SetType {
 }
 
 @Entity('sets')
-@Unique(['workoutExercise', 'performedBy', 'setNumber'])
+@Unique(['workoutExercise', 'participant', 'setNumber'])
 export class ExerciseSet {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -29,13 +29,15 @@ export class ExerciseSet {
   @Column({ name: 'workout_exercise_id' })
   workoutExerciseId: string;
 
-  // Who performed this set (for group workouts)
-  @ManyToOne(() => User)
-  @JoinColumn({ name: 'performed_by' })
-  performedBy: User;
+  // Participant who performed this set
+  @ManyToOne(() => WorkoutParticipant, (participant) => participant.sets, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'participant_id' })
+  participant: WorkoutParticipant;
 
-  @Column({ name: 'performed_by' })
-  performedById: string;
+  @Column({ name: 'participant_id' })
+  participantId: string;
 
   @Column()
   setNumber: number;

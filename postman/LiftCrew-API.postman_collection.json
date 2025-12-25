@@ -1,1697 +1,1697 @@
 {
-	"info": {
-		"_postman_id": "637b916e-f32c-469d-81ac-efc270e919d4",
-		"name": "LiftCrew API",
-		"description": "Complete API collection for LiftCrew application including Users and Gyms endpoints",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "15333074"
-	},
-	"item": [
-		{
-			"name": "Auth",
-			"item": [
-				{
-					"name": "Exchange Token",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"// Parse the response body",
-									"const responseJson = pm.response.json();",
-									"",
-									"// Check if access_token exists in the response",
-									"if (responseJson.access_token) {",
-									"    // Set the access_token as the jwt_token environment variable",
-									"    pm.environment.set(\"jwt_token\", responseJson.access_token);",
-									"    console.log(\"Access token has been saved to jwt_token variable:\", responseJson.access_token.substring(0, 20) + \"...\");",
-									"",
-									"    // Also save the refresh_token if present",
-									"    if (responseJson.refresh_token) {",
-									"        pm.environment.set(\"refresh_token\", responseJson.refresh_token);",
-									"        console.log(\"Refresh token has been saved to refresh_token variable\");",
-									"    }",
-									"} else {",
-									"    console.log(\"No access_token found in response\");",
-									"}"
-								],
-								"type": "text/javascript",
-								"packages": {},
-								"requests": {}
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{githubToken}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{firebase_token}}",
-								"description": "Firebase ID token"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/auth/exchange",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"auth",
-								"exchange"
-							]
-						},
-						"description": "Exchanges a Firebase ID token for an application JWT token. The access token is automatically saved to the jwt_token environment variable."
-					},
-					"response": []
-				},
-				{
-					"name": "Refresh Token",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"// Parse the response body",
-									"const responseJson = pm.response.json();",
-									"",
-									"// Check if access_token exists in the response",
-									"if (responseJson.access_token) {",
-									"    // Update the access_token in environment",
-									"    pm.environment.set(\"jwt_token\", responseJson.access_token);",
-									"    console.log(\"New access token has been saved to jwt_token variable\");",
-									"",
-									"    // The refresh_token should be the same as before",
-									"    if (responseJson.refresh_token) {",
-									"        pm.environment.set(\"refresh_token\", responseJson.refresh_token);",
-									"        console.log(\"Refresh token confirmed (unchanged)\");",
-									"    }",
-									"} else {",
-									"    console.log(\"No access_token found in response\");",
-									"}"
-								],
-								"type": "text/javascript",
-								"packages": {},
-								"requests": {}
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{refresh_token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/auth/refresh",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"auth",
-								"refresh"
-							]
-						},
-						"description": "Refreshes the JWT access token using the refresh token. Returns a new access token and the same refresh token. The new access token is automatically saved."
-					},
-					"response": []
-				},
-				{
-					"name": "Logout",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/auth/logout",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"auth",
-								"logout"
-							]
-						},
-						"description": "Logs out the authenticated user"
-					},
-					"response": []
-				}
-			],
-			"description": "Authentication endpoints for token exchange, refresh, and logout"
-		},
-		{
-			"name": "Users",
-			"item": [
-				{
-					"name": "Get Current User (Me)",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"// Parse the response body",
-									"const responseJson = pm.response.json();",
-									"",
-									"// Check if id exists in the response",
-									"if (responseJson.id) {",
-									"    // Set the user ID as the userId environment variable",
-									"    pm.environment.set(\"userId\", responseJson.id);",
-									"    console.log(\"User ID has been saved to userId variable:\", responseJson.id);",
-									"} else {",
-									"    console.log(\"No id found in response\");",
-									"}"
-								],
-								"type": "text/javascript",
-								"packages": {},
-								"requests": {}
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/users/me",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"users",
-								"me"
-							]
-						},
-						"description": "Retrieves the currently authenticated user's profile. Automatically saves the user ID to the userId environment variable."
-					},
-					"response": []
-				},
-				{
-					"name": "Search Users by Username",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/users/search?username=john",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"users",
-								"search"
-							],
-							"query": [
-								{
-									"key": "username",
-									"value": "john",
-									"description": "Username to search for (partial match, case-insensitive)"
-								}
-							]
-						},
-						"description": "Searches for users by username. Performs a case-insensitive partial match search. Excludes the current authenticated user from results."
-					},
-					"response": []
-				},
-				{
-					"name": "Get User by ID",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/users/:id",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"users",
-								":id"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "550e8400-e29b-41d4-a716-446655440000",
-									"description": "User UUID"
-								}
-							]
-						},
-						"description": "Retrieves a single user by their UUID"
-					},
-					"response": []
-				},
-				{
-					"name": "Create User",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"username\": \"john_doe\",\n  \"height\": 175,\n  \"weight\": 70,\n  \"birthdate\": \"1998-05-15\",\n  \"imageUrl\": \"https://example.com/profile/john.jpg\",\n  \"homeGymId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/users",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"users"
-							]
-						},
-						"description": "Creates a new user in the database"
-					},
-					"response": []
-				},
-				{
-					"name": "Update User",
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"name\": \"John Updated Doe\",\n  \"height\": 180,\n  \"weight\": 75,\n  \"imageUrl\": \"https://example.com/profile/john_new.jpg\",\n  \"homeGymId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/users",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"users"
-							]
-						},
-						"description": "Updates the authenticated user's profile information"
-					},
-					"response": []
-				},
-				{
-					"name": "Delete User",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/users",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"users"
-							]
-						},
-						"description": "Deletes the authenticated user's account"
-					},
-					"response": []
-				}
-			],
-			"description": "User management endpoints"
-		},
-		{
-			"name": "Social",
-			"item": [
-				{
-					"name": "Send Follow Request",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"followeeId\": \"550e8400-e29b-41d4-a716-446655440001\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/follows/request",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"follows",
-								"request"
-							]
-						},
-						"description": "Send a follow request to another user. Uses the authenticated user's ID from the JWT token as the follower. Creates a pending follow relationship."
-					},
-					"response": []
-				},
-				{
-					"name": "Accept Follow Request",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"followerId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/follows/accept",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"follows",
-								"accept"
-							]
-						},
-						"description": "Accept a pending follow request from another user. Uses the authenticated user's ID from the JWT token as the followee (person accepting)."
-					},
-					"response": []
-				},
-				{
-					"name": "Reject Follow Request",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"followerId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/follows/reject",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"follows",
-								"reject"
-							]
-						},
-						"description": "Reject a pending follow request from another user. Uses the authenticated user's ID from the JWT token as the followee (person rejecting)."
-					},
-					"response": []
-				},
-				{
-					"name": "Unfollow User",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/follows/unfollow/:followeeId",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"follows",
-								"unfollow",
-								":followeeId"
-							],
-							"variable": [
-								{
-									"key": "followeeId",
-									"value": "550e8400-e29b-41d4-a716-446655440001",
-									"description": "User ID of the person to unfollow"
-								}
-							]
-						},
-						"description": "Remove a follow relationship (unfollow a user). Uses the authenticated user's ID from the JWT token as the follower (person unfollowing)."
-					},
-					"response": []
-				},
-				{
-					"name": "Get Followers",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/follows/:userId/followers?page=1&limit=20&status=accepted",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"follows",
-								":userId",
-								"followers"
-							],
-							"query": [
-								{
-									"key": "page",
-									"value": "1",
-									"description": "Page number (default: 1)"
-								},
-								{
-									"key": "limit",
-									"value": "20",
-									"description": "Results per page (default: 20, max: 100)"
-								},
-								{
-									"key": "status",
-									"value": "accepted",
-									"description": "Filter by status: pending, accepted, rejected (optional)"
-								}
-							],
-							"variable": [
-								{
-									"key": "userId",
-									"value": "{{userId}}",
-									"description": "User ID (uses authenticated user's ID from /users/me)"
-								}
-							]
-						},
-						"description": "Get paginated list of followers for a user. Optionally filter by status."
-					},
-					"response": []
-				},
-				{
-					"name": "Get Following",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/follows/:userId/following?page=1&limit=20&status=accepted",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"follows",
-								":userId",
-								"following"
-							],
-							"query": [
-								{
-									"key": "page",
-									"value": "1",
-									"description": "Page number (default: 1)"
-								},
-								{
-									"key": "limit",
-									"value": "20",
-									"description": "Results per page (default: 20, max: 100)"
-								},
-								{
-									"key": "status",
-									"value": "accepted",
-									"description": "Filter by status: pending, accepted, rejected (optional)"
-								}
-							],
-							"variable": [
-								{
-									"key": "userId",
-									"value": "{{userId}}",
-									"description": "User ID (uses authenticated user's ID from /users/me)"
-								}
-							]
-						},
-						"description": "Get paginated list of users that this user follows. Optionally filter by status."
-					},
-					"response": []
-				},
-				{
-					"name": "Get Follow Stats",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/follows/:userId/stats",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"follows",
-								":userId",
-								"stats"
-							],
-							"variable": [
-								{
-									"key": "userId",
-									"value": "{{userId}}",
-									"description": "User ID (uses authenticated user's ID from /users/me)"
-								}
-							]
-						},
-						"description": "Get follow statistics for a user including follower count, following count, and pending requests count."
-					},
-					"response": []
-				},
-				{
-					"name": "Get Relationship Between Users",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/follows/:userId/relationship/:targetUserId",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"follows",
-								":userId",
-								"relationship",
-								":targetUserId"
-							],
-							"variable": [
-								{
-									"key": "userId",
-									"value": "{{userId}}",
-									"description": "User ID of the follower (uses authenticated user's ID from /users/me)"
-								},
-								{
-									"key": "targetUserId",
-									"value": "550e8400-e29b-41d4-a716-446655440001",
-									"description": "User ID of the target user"
-								}
-							]
-						},
-						"description": "Get the follow relationship between two users. Returns the relationship status and details if it exists."
-					},
-					"response": []
-				}
-			],
-			"description": "Social features including follow requests, followers, and following management"
-		},
-		{
-			"name": "Gyms",
-			"item": [
-				{
-					"name": "Get All Gyms",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/gyms",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"gyms"
-							]
-						},
-						"description": "Retrieves all gyms from the database"
-					},
-					"response": []
-				},
-				{
-					"name": "Get Gym by ID",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/gyms/:id",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"gyms",
-								":id"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "550e8400-e29b-41d4-a716-446655440000",
-									"description": "Gym UUID"
-								}
-							]
-						},
-						"description": "Retrieves a single gym by its UUID"
-					},
-					"response": []
-				},
-				{
-					"name": "Create Gym",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"name\": \"Gold's Gym Downtown\",\n  \"address\": \"123 Main St, New York, NY 10001\",\n  \"lat\": 40.7128,\n  \"lng\": -74.0060\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/gyms",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"gyms"
-							]
-						},
-						"description": "Creates a new gym in the database"
-					},
-					"response": []
-				},
-				{
-					"name": "Update Gym",
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"name\": \"Gold's Gym Downtown Updated\",\n  \"address\": \"456 Broadway, New York, NY 10001\",\n  \"lat\": 40.7150,\n  \"lng\": -74.0070\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/gyms/:id",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"gyms",
-								":id"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "550e8400-e29b-41d4-a716-446655440000",
-									"description": "Gym UUID"
-								}
-							]
-						},
-						"description": "Updates an existing gym's information"
-					},
-					"response": []
-				},
-				{
-					"name": "Delete Gym",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/gyms/:id",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"gyms",
-								":id"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "550e8400-e29b-41d4-a716-446655440000",
-									"description": "Gym UUID"
-								}
-							]
-						},
-						"description": "Deletes a gym from the database"
-					},
-					"response": []
-				}
-			],
-			"description": "Gym management endpoints"
-		},
-		{
-			"name": "Gym Equipment",
-			"item": [
-				{
-					"name": "Get All Gym Equipment",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/gym-equipment",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"gym-equipment"
-							]
-						},
-						"description": "Retrieves all gym equipment from the database"
-					},
-					"response": []
-				},
-				{
-					"name": "Get Gym Equipment by Type",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/gym-equipment?type=cardio",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"gym-equipment"
-							],
-							"query": [
-								{
-									"key": "type",
-									"value": "cardio",
-									"description": "Equipment type (e.g., cardio, strength, free-weights)"
-								}
-							]
-						},
-						"description": "Retrieves gym equipment filtered by type"
-					},
-					"response": []
-				},
-				{
-					"name": "Get Gym Equipment by ID",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/gym-equipment/:id",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"gym-equipment",
-								":id"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "550e8400-e29b-41d4-a716-446655440000",
-									"description": "Gym Equipment UUID"
-								}
-							]
-						},
-						"description": "Retrieves a single gym equipment by its UUID"
-					},
-					"response": []
-				},
-				{
-					"name": "Create Gym Equipment",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"name\": \"Treadmill\",\n  \"type\": \"cardio\",\n  \"brand\": \"Life Fitness\",\n  \"model\": \"T5\",\n  \"description\": \"Commercial-grade treadmill with advanced features\",\n  \"imageUrl\": \"https://example.com/images/treadmill.jpg\",\n  \"weight\": 150\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/gym-equipment",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"gym-equipment"
-							]
-						},
-						"description": "Creates a new gym equipment in the database"
-					},
-					"response": []
-				},
-				{
-					"name": "Update Gym Equipment",
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"name\": \"Treadmill Pro\",\n  \"type\": \"cardio\",\n  \"brand\": \"Life Fitness\",\n  \"model\": \"T5 Pro\",\n  \"description\": \"Updated commercial-grade treadmill with enhanced features\",\n  \"imageUrl\": \"https://example.com/images/treadmill-pro.jpg\",\n  \"weight\": 155\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/gym-equipment/:id",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"gym-equipment",
-								":id"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "550e8400-e29b-41d4-a716-446655440000",
-									"description": "Gym Equipment UUID"
-								}
-							]
-						},
-						"description": "Updates an existing gym equipment's information"
-					},
-					"response": []
-				},
-				{
-					"name": "Delete Gym Equipment",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/gym-equipment/:id",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"gym-equipment",
-								":id"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "550e8400-e29b-41d4-a716-446655440000",
-									"description": "Gym Equipment UUID"
-								}
-							]
-						},
-						"description": "Deletes a gym equipment from the database"
-					},
-					"response": []
-				}
-			],
-			"description": "Gym equipment management endpoints"
-		},
-		{
-			"name": "Exercises",
-			"item": [
-				{
-					"name": "Get All Exercises",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/exercises",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"exercises"
-							]
-						},
-						"description": "Retrieves all exercises from the database with muscle groups"
-					},
-					"response": []
-				},
-				{
-					"name": "Get Exercise by ID",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/exercises/:id",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"exercises",
-								":id"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "550e8400-e29b-41d4-a716-446655440000",
-									"description": "Exercise UUID"
-								}
-							]
-						},
-						"description": "Retrieves a single exercise by its UUID with muscle groups"
-					},
-					"response": []
-				},
-				{
-					"name": "Create Exercise",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"name\": \"Barbell Bench Press\",\n  \"description\": \"Lie on a flat bench and press the barbell up from chest level\",\n  \"category\": \"compound\",\n  \"equipmentType\": \"barbell\",\n  \"muscleGroupIds\": []\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/exercises",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"exercises"
-							]
-						},
-						"description": "Creates a new exercise in the database"
-					},
-					"response": []
-				},
-				{
-					"name": "Update Exercise",
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"name\": \"Barbell Bench Press - Updated\",\n  \"description\": \"Updated description\",\n  \"category\": \"compound\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/exercises/:id",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"exercises",
-								":id"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "550e8400-e29b-41d4-a716-446655440000",
-									"description": "Exercise UUID"
-								}
-							]
-						},
-						"description": "Updates an existing exercise's information"
-					},
-					"response": []
-				},
-				{
-					"name": "Delete Exercise",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/exercises/:id",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"exercises",
-								":id"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "550e8400-e29b-41d4-a716-446655440000",
-									"description": "Exercise UUID"
-								}
-							]
-						},
-						"description": "Deletes an exercise from the database"
-					},
-					"response": []
-				}
-			],
-			"description": "Exercise management endpoints"
-		},
-		{
-			"name": "Workouts",
-			"item": [
-				{
-					"name": "Get All Workouts",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/workouts",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"workouts"
-							]
-						},
-						"description": "Retrieves all workouts for the authenticated user. Results are ordered by startedAt date in ascending order. Use query parameters to filter by date range."
-					},
-					"response": []
-				},
-				{
-					"name": "Get Upcoming Workouts",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/workouts?startDate=2025-12-07T00:00:00Z",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"workouts"
-							],
-							"query": [
-								{
-									"key": "startDate",
-									"value": "2025-12-07T00:00:00Z",
-									"description": "Start date set to today to get upcoming workouts"
-								}
-							]
-						},
-						"description": "Retrieves upcoming workouts from today onwards by setting startDate to today's date."
-					},
-					"response": []
-				},
-				{
-					"name": "Get Workouts by Date Range",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/workouts?startDate=2025-12-01T00:00:00Z&endDate=2025-12-31T23:59:59Z",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"workouts"
-							],
-							"query": [
-								{
-									"key": "startDate",
-									"value": "2025-12-01T00:00:00Z",
-									"description": "Start date for filtering workouts (ISO 8601 format)"
-								},
-								{
-									"key": "endDate",
-									"value": "2025-12-31T23:59:59Z",
-									"description": "End date for filtering workouts (ISO 8601 format)"
-								}
-							]
-						},
-						"description": "Retrieves workouts for the authenticated user within a specific date range. Useful for fetching past workouts or workouts in a specific time period."
-					},
-					"response": []
-				},
-				{
-					"name": "Get Past Workouts",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/workouts?startDate=2025-01-01T00:00:00Z&endDate=2025-12-06T23:59:59Z",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"workouts"
-							],
-							"query": [
-								{
-									"key": "startDate",
-									"value": "2025-01-01T00:00:00Z",
-									"description": "Start date (e.g., beginning of year)"
-								},
-								{
-									"key": "endDate",
-									"value": "2025-12-06T23:59:59Z",
-									"description": "End date (e.g., yesterday or specific past date)"
-								}
-							]
-						},
-						"description": "Retrieves past workouts for the authenticated user by specifying both startDate and endDate before today."
-					},
-					"response": []
-				},
-				{
-					"name": "Get Workout by ID",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"// Parse the response body",
-									"const responseJson = pm.response.json();",
-									"",
-									"// Check if id exists in the response",
-									"if (responseJson.id) {",
-									"    // Set the workout ID as the workoutId environment variable",
-									"    pm.environment.set(\"workoutId\", responseJson.id);",
-									"    console.log(\"Workout ID has been saved to workoutId variable:\", responseJson.id);",
-									"} else {",
-									"    console.log(\"No id found in response\");",
-									"}"
-								],
-								"type": "text/javascript",
-								"packages": {},
-								"requests": {}
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/workouts/:id",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"workouts",
-								":id"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "{{workoutId}}",
-									"description": "Workout UUID"
-								}
-							]
-						},
-						"description": "Retrieves a single workout by its UUID with all relations. Automatically saves the workout ID to the workoutId environment variable."
-					},
-					"response": []
-				},
-				{
-					"name": "Create Workout",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"// Parse the response body",
-									"const responseJson = pm.response.json();",
-									"",
-									"// Check if id exists in the response",
-									"if (responseJson.id) {",
-									"    // Set the workout ID as the workoutId environment variable",
-									"    pm.environment.set(\"workoutId\", responseJson.id);",
-									"    console.log(\"Workout ID has been saved to workoutId variable:\", responseJson.id);",
-									"} else {",
-									"    console.log(\"No id found in response\");",
-									"}"
-								],
-								"type": "text/javascript",
-								"packages": {},
-								"requests": {}
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"name\": \"Morning Chest Day\",\n  \"startedAt\": \"2025-12-07T10:00:00Z\",\n  \"status\": \"in_progress\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/workouts",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"workouts"
-							]
-						},
-						"description": "Creates a new workout in the database. Automatically saves the workout ID to the workoutId environment variable."
-					},
-					"response": []
-				},
-				{
-					"name": "Update Workout",
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"name\": \"Evening Chest Day\",\n  \"status\": \"completed\",\n  \"endedAt\": \"2025-12-07T12:00:00Z\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/workouts/:id",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"workouts",
-								":id"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "{{workoutId}}",
-									"description": "Workout UUID"
-								}
-							]
-						},
-						"description": "Updates an existing workout's information"
-					},
-					"response": []
-				},
-				{
-					"name": "Delete Workout",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/workouts/:id",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"workouts",
-								":id"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "{{workoutId}}",
-									"description": "Workout UUID"
-								}
-							]
-						},
-						"description": "Deletes a workout from the database. TODO: Only allow deletion by the workout creator"
-					},
-					"response": []
-				},
-				{
-					"name": "Get All Participants",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/workouts/:id/participants",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"workouts",
-								":id",
-								"participants"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "{{workoutId}}",
-									"description": "Workout UUID"
-								}
-							]
-						},
-						"description": "Gets all participants of a workout with their user and gym information. Only accessible to users who are participants in the workout. Results are ordered by joinedAt date in ascending order."
-					},
-					"response": []
-				},
-				{
-					"name": "Get My Participation",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/workouts/:id/participants/me",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"workouts",
-								":id",
-								"participants",
-								"me"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "{{workoutId}}",
-									"description": "Workout UUID"
-								}
-							]
-						},
-						"description": "Gets the authenticated user's participation record in a specific workout. Returns the participant record with user and gym relations, or null if the user is not participating in this workout."
-					},
-					"response": []
-				},
-				{
-					"name": "Add Participant",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"userId\": \"550e8400-e29b-41d4-a716-446655440001\",\n  \"role\": \"participant\",\n  \"gymId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/workouts/:id/participants",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"workouts",
-								":id",
-								"participants"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "{{workoutId}}",
-									"description": "Workout UUID"
-								}
-							]
-						},
-						"description": "Adds a participant to a workout. TODO: Check friendship status before allowing participant to be added"
-					},
-					"response": []
-				},
-				{
-					"name": "Update Participant",
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"startAt\": \"2025-12-07T10:15:00Z\",\n  \"finishedAt\": \"2025-12-07T11:45:00Z\",\n  \"role\": \"participant\",\n  \"gymId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/workouts/:id/participants/:userId",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"workouts",
-								":id",
-								"participants",
-								":userId"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "{{workoutId}}",
-									"description": "Workout UUID"
-								},
-								{
-									"key": "userId",
-									"value": "{{userId}}",
-									"description": "User UUID of the participant to update"
-								}
-							]
-						},
-						"description": "Updates a participant's information in a workout. Can update startAt, finishedAt, role, and gymId. Only the workout creator or the participant themselves can update the participant record."
-					},
-					"response": []
-				},
-				{
-					"name": "Remove Participant",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/workouts/:id/participants/:userId",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"workouts",
-								":id",
-								"participants",
-								":userId"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "{{workoutId}}",
-									"description": "Workout UUID"
-								},
-								{
-									"key": "userId",
-									"value": "550e8400-e29b-41d4-a716-446655440001",
-									"description": "User UUID"
-								}
-							]
-						},
-						"description": "Removes a participant from a workout. TODO: Check friendship status and permissions before allowing removal"
-					},
-					"response": []
-				},
-				{
-					"name": "Add Exercise to Workout",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"// Parse the response body",
-									"const responseJson = pm.response.json();",
-									"",
-									"// Check if id exists in the response",
-									"if (responseJson.id) {",
-									"    // Set the workout exercise ID as the workoutExerciseId environment variable",
-									"    pm.environment.set(\"workoutExerciseId\", responseJson.id);",
-									"    console.log(\"Workout Exercise ID has been saved to workoutExerciseId variable:\", responseJson.id);",
-									"} else {",
-									"    console.log(\"No id found in response\");",
-									"}"
-								],
-								"type": "text/javascript",
-								"packages": {},
-								"requests": {}
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"exerciseId\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"orderIndex\": 1,\n  \"notes\": \"Focus on form, not weight\",\n  \"restSeconds\": 90,\n  \"sets\": [\n    {\n      \"performedById\": \"{{userId}}\",\n      \"setNumber\": 1,\n      \"setType\": \"warmup\",\n      \"reps\": 10,\n      \"weightKg\": 60\n    },\n    {\n      \"performedById\": \"{{userId}}\",\n      \"setNumber\": 2,\n      \"setType\": \"working\",\n      \"reps\": 8,\n      \"weightKg\": 80,\n      \"rpe\": 8.5\n    }\n  ]\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/workouts/:id/exercises",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"workouts",
-								":id",
-								"exercises"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "{{workoutId}}",
-									"description": "Workout UUID"
-								}
-							]
-						},
-						"description": "Adds an exercise with optional sets to a workout. Automatically saves the workout exercise ID to the workoutExerciseId environment variable."
-					},
-					"response": []
-				},
-				{
-					"name": "Remove Exercise from Workout",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/workouts/:id/exercises/:exerciseId",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"workouts",
-								":id",
-								"exercises",
-								":exerciseId"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "{{workoutId}}",
-									"description": "Workout UUID"
-								},
-								{
-									"key": "exerciseId",
-									"value": "{{workoutExerciseId}}",
-									"description": "Workout Exercise UUID"
-								}
-							]
-						},
-						"description": "Removes an exercise and all its sets from a workout"
-					},
-					"response": []
-				},
-				{
-					"name": "Add Set to Exercise",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"performedById\": \"{{userId}}\",\n  \"setNumber\": 3,\n  \"setType\": \"working\",\n  \"reps\": 6,\n  \"weightKg\": 85,\n  \"rpe\": 9,\n  \"completed\": true,\n  \"notes\": \"Felt strong on this set\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/workouts/:id/exercises/:exerciseId/sets",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"workouts",
-								":id",
-								"exercises",
-								":exerciseId",
-								"sets"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "{{workoutId}}",
-									"description": "Workout UUID"
-								},
-								{
-									"key": "exerciseId",
-									"value": "{{workoutExerciseId}}",
-									"description": "Workout Exercise UUID"
-								}
-							]
-						},
-						"description": "Adds a set to a workout exercise"
-					},
-					"response": []
-				},
-				{
-					"name": "Remove Set from Exercise",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/workouts/:id/exercises/:exerciseId/sets/:setId",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"workouts",
-								":id",
-								"exercises",
-								":exerciseId",
-								"sets",
-								":setId"
-							],
-							"variable": [
-								{
-									"key": "id",
-									"value": "{{workoutId}}",
-									"description": "Workout UUID"
-								},
-								{
-									"key": "exerciseId",
-									"value": "{{workoutExerciseId}}",
-									"description": "Workout Exercise UUID"
-								},
-								{
-									"key": "setId",
-									"value": "550e8400-e29b-41d4-a716-446655440000",
-									"description": "Set UUID"
-								}
-							]
-						},
-						"description": "Removes a set from a workout exercise"
-					},
-					"response": []
-				}
-			],
-			"description": "Workout management endpoints including CRUD operations, participant management, exercise management, and set management"
-		}
-	],
-	"auth": {
-		"type": "bearer",
-		"bearer": [
-			{
-				"key": "token",
-				"value": "{{jwt_token}}",
-				"type": "string"
-			}
-		]
-	},
-	"event": [
-		{
-			"listen": "prerequest",
-			"script": {
-				"type": "text/javascript",
-				"packages": {},
-				"requests": {},
-				"exec": [
-					""
-				]
-			}
-		},
-		{
-			"listen": "test",
-			"script": {
-				"type": "text/javascript",
-				"packages": {},
-				"requests": {},
-				"exec": [
-					""
-				]
-			}
-		}
-	],
-	"variable": [
-		{
-			"key": "base_url",
-			"value": "{{base_url}}"
-		}
-	]
+  "info": {
+    "_postman_id": "637b916e-f32c-469d-81ac-efc270e919d4",
+    "name": "LiftCrew API",
+    "description": "Complete API collection for LiftCrew application including Users and Gyms endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "15333074"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Exchange Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Parse the response body",
+                  "const responseJson = pm.response.json();",
+                  "",
+                  "// Check if access_token exists in the response",
+                  "if (responseJson.access_token) {",
+                  "    // Set the access_token as the jwt_token environment variable",
+                  "    pm.environment.set(\"jwt_token\", responseJson.access_token);",
+                  "    console.log(\"Access token has been saved to jwt_token variable:\", responseJson.access_token.substring(0, 20) + \"...\");",
+                  "",
+                  "    // Also save the refresh_token if present",
+                  "    if (responseJson.refresh_token) {",
+                  "        pm.environment.set(\"refresh_token\", responseJson.refresh_token);",
+                  "        console.log(\"Refresh token has been saved to refresh_token variable\");",
+                  "    }",
+                  "} else {",
+                  "    console.log(\"No access_token found in response\");",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{githubToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_token}}",
+                "description": "Firebase ID token"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/exchange",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "exchange"
+              ]
+            },
+            "description": "Exchanges a Firebase ID token for an application JWT token. The access token is automatically saved to the jwt_token environment variable."
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Parse the response body",
+                  "const responseJson = pm.response.json();",
+                  "",
+                  "// Check if access_token exists in the response",
+                  "if (responseJson.access_token) {",
+                  "    // Update the access_token in environment",
+                  "    pm.environment.set(\"jwt_token\", responseJson.access_token);",
+                  "    console.log(\"New access token has been saved to jwt_token variable\");",
+                  "",
+                  "    // The refresh_token should be the same as before",
+                  "    if (responseJson.refresh_token) {",
+                  "        pm.environment.set(\"refresh_token\", responseJson.refresh_token);",
+                  "        console.log(\"Refresh token confirmed (unchanged)\");",
+                  "    }",
+                  "} else {",
+                  "    console.log(\"No access_token found in response\");",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{refresh_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/auth/refresh",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "Refreshes the JWT access token using the refresh token. Returns a new access token and the same refresh token. The new access token is automatically saved."
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/auth/logout",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Logs out the authenticated user"
+          },
+          "response": []
+        }
+      ],
+      "description": "Authentication endpoints for token exchange, refresh, and logout"
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get Current User (Me)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Parse the response body",
+                  "const responseJson = pm.response.json();",
+                  "",
+                  "// Check if id exists in the response",
+                  "if (responseJson.id) {",
+                  "    // Set the user ID as the userId environment variable",
+                  "    pm.environment.set(\"userId\", responseJson.id);",
+                  "    console.log(\"User ID has been saved to userId variable:\", responseJson.id);",
+                  "} else {",
+                  "    console.log(\"No id found in response\");",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/users/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                "me"
+              ]
+            },
+            "description": "Retrieves the currently authenticated user's profile. Automatically saves the user ID to the userId environment variable."
+          },
+          "response": []
+        },
+        {
+          "name": "Search Users by Username",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/users/search?username=john",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "username",
+                  "value": "john",
+                  "description": "Username to search for (partial match, case-insensitive)"
+                }
+              ]
+            },
+            "description": "Searches for users by username. Performs a case-insensitive partial match search. Excludes the current authenticated user from results."
+          },
+          "response": []
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/users/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "550e8400-e29b-41d4-a716-446655440000",
+                  "description": "User UUID"
+                }
+              ]
+            },
+            "description": "Retrieves a single user by their UUID"
+          },
+          "response": []
+        },
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"john_doe\",\n  \"height\": 175,\n  \"weight\": 70,\n  \"birthdate\": \"1998-05-15\",\n  \"imageUrl\": \"https://example.com/profile/john.jpg\",\n  \"homeGymId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users"
+              ]
+            },
+            "description": "Creates a new user in the database"
+          },
+          "response": []
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Updated Doe\",\n  \"height\": 180,\n  \"weight\": 75,\n  \"imageUrl\": \"https://example.com/profile/john_new.jpg\",\n  \"homeGymId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users"
+              ]
+            },
+            "description": "Updates the authenticated user's profile information"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/users",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "users"
+              ]
+            },
+            "description": "Deletes the authenticated user's account"
+          },
+          "response": []
+        }
+      ],
+      "description": "User management endpoints"
+    },
+    {
+      "name": "Social",
+      "item": [
+        {
+          "name": "Send Follow Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"followeeId\": \"550e8400-e29b-41d4-a716-446655440001\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/follows/request",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "follows",
+                "request"
+              ]
+            },
+            "description": "Send a follow request to another user. Uses the authenticated user's ID from the JWT token as the follower. Creates a pending follow relationship."
+          },
+          "response": []
+        },
+        {
+          "name": "Accept Follow Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"followerId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/follows/accept",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "follows",
+                "accept"
+              ]
+            },
+            "description": "Accept a pending follow request from another user. Uses the authenticated user's ID from the JWT token as the followee (person accepting)."
+          },
+          "response": []
+        },
+        {
+          "name": "Reject Follow Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"followerId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/follows/reject",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "follows",
+                "reject"
+              ]
+            },
+            "description": "Reject a pending follow request from another user. Uses the authenticated user's ID from the JWT token as the followee (person rejecting)."
+          },
+          "response": []
+        },
+        {
+          "name": "Unfollow User",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/follows/unfollow/:followeeId",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "follows",
+                "unfollow",
+                ":followeeId"
+              ],
+              "variable": [
+                {
+                  "key": "followeeId",
+                  "value": "550e8400-e29b-41d4-a716-446655440001",
+                  "description": "User ID of the person to unfollow"
+                }
+              ]
+            },
+            "description": "Remove a follow relationship (unfollow a user). Uses the authenticated user's ID from the JWT token as the follower (person unfollowing)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Followers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/follows/:userId/followers?page=1&limit=20&status=accepted",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "follows",
+                ":userId",
+                "followers"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Results per page (default: 20, max: 100)"
+                },
+                {
+                  "key": "status",
+                  "value": "accepted",
+                  "description": "Filter by status: pending, accepted, rejected (optional)"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "{{userId}}",
+                  "description": "User ID (uses authenticated user's ID from /users/me)"
+                }
+              ]
+            },
+            "description": "Get paginated list of followers for a user. Optionally filter by status."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Following",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/follows/:userId/following?page=1&limit=20&status=accepted",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "follows",
+                ":userId",
+                "following"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Results per page (default: 20, max: 100)"
+                },
+                {
+                  "key": "status",
+                  "value": "accepted",
+                  "description": "Filter by status: pending, accepted, rejected (optional)"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "{{userId}}",
+                  "description": "User ID (uses authenticated user's ID from /users/me)"
+                }
+              ]
+            },
+            "description": "Get paginated list of users that this user follows. Optionally filter by status."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Follow Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/follows/:userId/stats",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "follows",
+                ":userId",
+                "stats"
+              ],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "{{userId}}",
+                  "description": "User ID (uses authenticated user's ID from /users/me)"
+                }
+              ]
+            },
+            "description": "Get follow statistics for a user including follower count, following count, and pending requests count."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Relationship Between Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/follows/:userId/relationship/:targetUserId",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "follows",
+                ":userId",
+                "relationship",
+                ":targetUserId"
+              ],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "{{userId}}",
+                  "description": "User ID of the follower (uses authenticated user's ID from /users/me)"
+                },
+                {
+                  "key": "targetUserId",
+                  "value": "550e8400-e29b-41d4-a716-446655440001",
+                  "description": "User ID of the target user"
+                }
+              ]
+            },
+            "description": "Get the follow relationship between two users. Returns the relationship status and details if it exists."
+          },
+          "response": []
+        }
+      ],
+      "description": "Social features including follow requests, followers, and following management"
+    },
+    {
+      "name": "Gyms",
+      "item": [
+        {
+          "name": "Get All Gyms",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/gyms",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "gyms"
+              ]
+            },
+            "description": "Retrieves all gyms from the database"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Gym by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/gyms/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "gyms",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "550e8400-e29b-41d4-a716-446655440000",
+                  "description": "Gym UUID"
+                }
+              ]
+            },
+            "description": "Retrieves a single gym by its UUID"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Gym",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Gold's Gym Downtown\",\n  \"address\": \"123 Main St, New York, NY 10001\",\n  \"lat\": 40.7128,\n  \"lng\": -74.0060\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/gyms",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "gyms"
+              ]
+            },
+            "description": "Creates a new gym in the database"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Gym",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Gold's Gym Downtown Updated\",\n  \"address\": \"456 Broadway, New York, NY 10001\",\n  \"lat\": 40.7150,\n  \"lng\": -74.0070\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/gyms/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "gyms",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "550e8400-e29b-41d4-a716-446655440000",
+                  "description": "Gym UUID"
+                }
+              ]
+            },
+            "description": "Updates an existing gym's information"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Gym",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/gyms/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "gyms",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "550e8400-e29b-41d4-a716-446655440000",
+                  "description": "Gym UUID"
+                }
+              ]
+            },
+            "description": "Deletes a gym from the database"
+          },
+          "response": []
+        }
+      ],
+      "description": "Gym management endpoints"
+    },
+    {
+      "name": "Gym Equipment",
+      "item": [
+        {
+          "name": "Get All Gym Equipment",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/gym-equipment",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "gym-equipment"
+              ]
+            },
+            "description": "Retrieves all gym equipment from the database"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Gym Equipment by Type",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/gym-equipment?type=cardio",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "gym-equipment"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "cardio",
+                  "description": "Equipment type (e.g., cardio, strength, free-weights)"
+                }
+              ]
+            },
+            "description": "Retrieves gym equipment filtered by type"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Gym Equipment by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/gym-equipment/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "gym-equipment",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "550e8400-e29b-41d4-a716-446655440000",
+                  "description": "Gym Equipment UUID"
+                }
+              ]
+            },
+            "description": "Retrieves a single gym equipment by its UUID"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Gym Equipment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Treadmill\",\n  \"type\": \"cardio\",\n  \"brand\": \"Life Fitness\",\n  \"model\": \"T5\",\n  \"description\": \"Commercial-grade treadmill with advanced features\",\n  \"imageUrl\": \"https://example.com/images/treadmill.jpg\",\n  \"weight\": 150\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/gym-equipment",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "gym-equipment"
+              ]
+            },
+            "description": "Creates a new gym equipment in the database"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Gym Equipment",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Treadmill Pro\",\n  \"type\": \"cardio\",\n  \"brand\": \"Life Fitness\",\n  \"model\": \"T5 Pro\",\n  \"description\": \"Updated commercial-grade treadmill with enhanced features\",\n  \"imageUrl\": \"https://example.com/images/treadmill-pro.jpg\",\n  \"weight\": 155\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/gym-equipment/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "gym-equipment",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "550e8400-e29b-41d4-a716-446655440000",
+                  "description": "Gym Equipment UUID"
+                }
+              ]
+            },
+            "description": "Updates an existing gym equipment's information"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Gym Equipment",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/gym-equipment/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "gym-equipment",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "550e8400-e29b-41d4-a716-446655440000",
+                  "description": "Gym Equipment UUID"
+                }
+              ]
+            },
+            "description": "Deletes a gym equipment from the database"
+          },
+          "response": []
+        }
+      ],
+      "description": "Gym equipment management endpoints"
+    },
+    {
+      "name": "Exercises",
+      "item": [
+        {
+          "name": "Get All Exercises",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/exercises",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "exercises"
+              ]
+            },
+            "description": "Retrieves all exercises from the database with muscle groups"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Exercise by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/exercises/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "exercises",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "550e8400-e29b-41d4-a716-446655440000",
+                  "description": "Exercise UUID"
+                }
+              ]
+            },
+            "description": "Retrieves a single exercise by its UUID with muscle groups"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Exercise",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Barbell Bench Press\",\n  \"description\": \"Lie on a flat bench and press the barbell up from chest level\",\n  \"category\": \"compound\",\n  \"equipmentType\": \"barbell\",\n  \"muscleGroupIds\": []\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/exercises",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "exercises"
+              ]
+            },
+            "description": "Creates a new exercise in the database"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Exercise",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Barbell Bench Press - Updated\",\n  \"description\": \"Updated description\",\n  \"category\": \"compound\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/exercises/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "exercises",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "550e8400-e29b-41d4-a716-446655440000",
+                  "description": "Exercise UUID"
+                }
+              ]
+            },
+            "description": "Updates an existing exercise's information"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Exercise",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/exercises/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "exercises",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "550e8400-e29b-41d4-a716-446655440000",
+                  "description": "Exercise UUID"
+                }
+              ]
+            },
+            "description": "Deletes an exercise from the database"
+          },
+          "response": []
+        }
+      ],
+      "description": "Exercise management endpoints"
+    },
+    {
+      "name": "Workouts",
+      "item": [
+        {
+          "name": "Get All Workouts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/workouts",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "workouts"
+              ]
+            },
+            "description": "Retrieves all workouts for the authenticated user. Results are ordered by startedAt date in ascending order. Use query parameters to filter by date range."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Upcoming Workouts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/workouts?startDate=2025-12-07T00:00:00Z",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "workouts"
+              ],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2025-12-07T00:00:00Z",
+                  "description": "Start date set to today to get upcoming workouts"
+                }
+              ]
+            },
+            "description": "Retrieves upcoming workouts from today onwards by setting startDate to today's date."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Workouts by Date Range",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/workouts?startDate=2025-12-01T00:00:00Z&endDate=2025-12-31T23:59:59Z",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "workouts"
+              ],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2025-12-01T00:00:00Z",
+                  "description": "Start date for filtering workouts (ISO 8601 format)"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2025-12-31T23:59:59Z",
+                  "description": "End date for filtering workouts (ISO 8601 format)"
+                }
+              ]
+            },
+            "description": "Retrieves workouts for the authenticated user within a specific date range. Useful for fetching past workouts or workouts in a specific time period."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Past Workouts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/workouts?startDate=2025-01-01T00:00:00Z&endDate=2025-12-06T23:59:59Z",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "workouts"
+              ],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2025-01-01T00:00:00Z",
+                  "description": "Start date (e.g., beginning of year)"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2025-12-06T23:59:59Z",
+                  "description": "End date (e.g., yesterday or specific past date)"
+                }
+              ]
+            },
+            "description": "Retrieves past workouts for the authenticated user by specifying both startDate and endDate before today."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Workout by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Parse the response body",
+                  "const responseJson = pm.response.json();",
+                  "",
+                  "// Check if id exists in the response",
+                  "if (responseJson.id) {",
+                  "    // Set the workout ID as the workoutId environment variable",
+                  "    pm.environment.set(\"workoutId\", responseJson.id);",
+                  "    console.log(\"Workout ID has been saved to workoutId variable:\", responseJson.id);",
+                  "} else {",
+                  "    console.log(\"No id found in response\");",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/workouts/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "workouts",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{workoutId}}",
+                  "description": "Workout UUID"
+                }
+              ]
+            },
+            "description": "Retrieves a single workout by its UUID with all relations. Automatically saves the workout ID to the workoutId environment variable."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Workout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Parse the response body",
+                  "const responseJson = pm.response.json();",
+                  "",
+                  "// Check if id exists in the response",
+                  "if (responseJson.id) {",
+                  "    // Set the workout ID as the workoutId environment variable",
+                  "    pm.environment.set(\"workoutId\", responseJson.id);",
+                  "    console.log(\"Workout ID has been saved to workoutId variable:\", responseJson.id);",
+                  "} else {",
+                  "    console.log(\"No id found in response\");",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Morning Chest Day\",\n  \"startedAt\": \"2025-12-07T10:00:00Z\",\n  \"status\": \"in_progress\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/workouts",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "workouts"
+              ]
+            },
+            "description": "Creates a new workout in the database. Automatically saves the workout ID to the workoutId environment variable."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Workout",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Evening Chest Day\",\n  \"status\": \"completed\",\n  \"endedAt\": \"2025-12-07T12:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/workouts/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "workouts",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{workoutId}}",
+                  "description": "Workout UUID"
+                }
+              ]
+            },
+            "description": "Updates an existing workout's information"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Workout",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/workouts/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "workouts",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{workoutId}}",
+                  "description": "Workout UUID"
+                }
+              ]
+            },
+            "description": "Deletes a workout from the database. TODO: Only allow deletion by the workout creator"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Participants",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/workouts/:id/participants",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "workouts",
+                ":id",
+                "participants"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{workoutId}}",
+                  "description": "Workout UUID"
+                }
+              ]
+            },
+            "description": "Gets all participants of a workout with their user and gym information. Only accessible to users who are participants in the workout. Results are ordered by joinedAt date in ascending order."
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Participation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/workouts/:id/participants/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "workouts",
+                ":id",
+                "participants",
+                "me"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{workoutId}}",
+                  "description": "Workout UUID"
+                }
+              ]
+            },
+            "description": "Gets the authenticated user's participation record in a specific workout. Returns the participant record with user and gym relations, or null if the user is not participating in this workout."
+          },
+          "response": []
+        },
+        {
+          "name": "Add Participant",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"550e8400-e29b-41d4-a716-446655440001\",\n  \"role\": \"participant\",\n  \"gymId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/workouts/:id/participants",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "workouts",
+                ":id",
+                "participants"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{workoutId}}",
+                  "description": "Workout UUID"
+                }
+              ]
+            },
+            "description": "Adds a participant to a workout. TODO: Check friendship status before allowing participant to be added"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Participant",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"startAt\": \"2025-12-07T10:15:00Z\",\n  \"finishedAt\": \"2025-12-07T11:45:00Z\",\n  \"role\": \"participant\",\n  \"gymId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/workouts/:id/participants/:userId",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "workouts",
+                ":id",
+                "participants",
+                ":userId"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{workoutId}}",
+                  "description": "Workout UUID"
+                },
+                {
+                  "key": "userId",
+                  "value": "{{userId}}",
+                  "description": "User UUID of the participant to update"
+                }
+              ]
+            },
+            "description": "Updates a participant's information in a workout. Can update startAt, finishedAt, role, and gymId. Only the workout creator or the participant themselves can update the participant record."
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Participant",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/workouts/:id/participants/:userId",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "workouts",
+                ":id",
+                "participants",
+                ":userId"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{workoutId}}",
+                  "description": "Workout UUID"
+                },
+                {
+                  "key": "userId",
+                  "value": "550e8400-e29b-41d4-a716-446655440001",
+                  "description": "User UUID"
+                }
+              ]
+            },
+            "description": "Removes a participant from a workout. TODO: Check friendship status and permissions before allowing removal"
+          },
+          "response": []
+        },
+        {
+          "name": "Add Exercise to Workout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Parse the response body",
+                  "const responseJson = pm.response.json();",
+                  "",
+                  "// Check if id exists in the response",
+                  "if (responseJson.id) {",
+                  "    // Set the workout exercise ID as the workoutExerciseId environment variable",
+                  "    pm.environment.set(\"workoutExerciseId\", responseJson.id);",
+                  "    console.log(\"Workout Exercise ID has been saved to workoutExerciseId variable:\", responseJson.id);",
+                  "} else {",
+                  "    console.log(\"No id found in response\");",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"exerciseId\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"orderIndex\": 1,\n  \"notes\": \"Focus on form, not weight\",\n  \"restSeconds\": 90,\n  \"sets\": [\n    {\n      \"performedById\": \"{{userId}}\",\n      \"setNumber\": 1,\n      \"setType\": \"warmup\",\n      \"reps\": 10,\n      \"weightKg\": 60\n    },\n    {\n      \"performedById\": \"{{userId}}\",\n      \"setNumber\": 2,\n      \"setType\": \"working\",\n      \"reps\": 8,\n      \"weightKg\": 80,\n      \"rpe\": 8.5\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/workouts/:id/exercises",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "workouts",
+                ":id",
+                "exercises"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{workoutId}}",
+                  "description": "Workout UUID"
+                }
+              ]
+            },
+            "description": "Adds an exercise with optional sets to a workout. Automatically saves the workout exercise ID to the workoutExerciseId environment variable."
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Exercise from Workout",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/workouts/:id/exercises/:exerciseId",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "workouts",
+                ":id",
+                "exercises",
+                ":exerciseId"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{workoutId}}",
+                  "description": "Workout UUID"
+                },
+                {
+                  "key": "exerciseId",
+                  "value": "{{workoutExerciseId}}",
+                  "description": "Workout Exercise UUID"
+                }
+              ]
+            },
+            "description": "Removes an exercise and all its sets from a workout"
+          },
+          "response": []
+        },
+        {
+          "name": "Add Set to Exercise",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"participantId\": \"{{participantId}}\",\n  \"setNumber\": 3,\n  \"setType\": \"working\",\n  \"reps\": 6,\n  \"weightKg\": 85,\n  \"rpe\": 9,\n  \"completed\": true,\n  \"notes\": \"Felt strong on this set\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/workouts/:id/exercises/:exerciseId/sets",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "workouts",
+                ":id",
+                "exercises",
+                ":exerciseId",
+                "sets"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{workoutId}}",
+                  "description": "Workout UUID"
+                },
+                {
+                  "key": "exerciseId",
+                  "value": "{{workoutExerciseId}}",
+                  "description": "Workout Exercise UUID"
+                }
+              ]
+            },
+            "description": "Adds a set to a workout exercise"
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Set from Exercise",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/workouts/:id/exercises/:exerciseId/sets/:setId",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "workouts",
+                ":id",
+                "exercises",
+                ":exerciseId",
+                "sets",
+                ":setId"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{workoutId}}",
+                  "description": "Workout UUID"
+                },
+                {
+                  "key": "exerciseId",
+                  "value": "{{workoutExerciseId}}",
+                  "description": "Workout Exercise UUID"
+                },
+                {
+                  "key": "setId",
+                  "value": "550e8400-e29b-41d4-a716-446655440000",
+                  "description": "Set UUID"
+                }
+              ]
+            },
+            "description": "Removes a set from a workout exercise"
+          },
+          "response": []
+        }
+      ],
+      "description": "Workout management endpoints including CRUD operations, participant management, exercise management, and set management"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "{{base_url}}"
+    }
+  ]
 }

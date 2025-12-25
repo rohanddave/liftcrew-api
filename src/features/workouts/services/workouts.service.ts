@@ -332,7 +332,7 @@ export class WorkoutsService {
   ): Promise<WorkoutParticipant | null> {
     const participant = await this.workoutParticipantRepository.findOne({
       where: { workoutId, userId },
-      relations: { user: true, gym: true },
+      relations: { user: true, gym: true, sets: true },
     });
 
     return participant;
@@ -381,18 +381,32 @@ export class WorkoutsService {
       );
     }
 
-    // Check if set number already exists for this performer
+    // Verify participant exists and belongs to this workout
+    const participant = await this.workoutParticipantRepository.findOne({
+      where: {
+        id: addSetDto.participantId,
+        workoutId,
+      },
+    });
+
+    if (!participant) {
+      throw new NotFoundException(
+        `Participant ${addSetDto.participantId} not found in workout ${workoutId}`,
+      );
+    }
+
+    // Check if set number already exists for this participant
     const existingSet = await this.exerciseSetRepository.findOne({
       where: {
         workoutExerciseId,
-        performedById: addSetDto.performedById,
+        participantId: addSetDto.participantId,
         setNumber: addSetDto.setNumber,
       },
     });
 
     if (existingSet) {
       throw new BadRequestException(
-        `Set number ${addSetDto.setNumber} already exists for this user on this exercise`,
+        `Set number ${addSetDto.setNumber} already exists for this participant on this exercise`,
       );
     }
 
