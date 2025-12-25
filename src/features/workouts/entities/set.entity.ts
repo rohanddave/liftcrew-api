@@ -49,17 +49,17 @@ export class ExerciseSet {
   @Column({ nullable: true })
   reps?: number;
 
-  @Column({ type: 'decimal', precision: 6, scale: 2, nullable: true })
+  @Column({ type: 'decimal', precision: 6, scale: 2, nullable: true, transformer: { from: (value) => value ? parseFloat(value) : null, to: (value) => value } })
   weightKg?: number;
 
   @Column({ nullable: true })
   durationSeconds?: number;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true, transformer: { from: (value) => value ? parseFloat(value) : null, to: (value) => value } })
   distanceMeters?: number;
 
   // Intensity
-  @Column({ type: 'decimal', precision: 3, scale: 1, nullable: true })
+  @Column({ type: 'decimal', precision: 3, scale: 1, nullable: true, transformer: { from: (value) => value ? parseFloat(value) : null, to: (value) => value } })
   rpe?: number;
 
   @Column({ nullable: true })
