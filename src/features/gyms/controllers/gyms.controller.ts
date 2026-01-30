@@ -12,7 +12,7 @@ import {
 import { GymsService } from '../services/gyms.service';
 import { CreateGymDto } from '../dto/create-gym.dto';
 import { UpdateGymDto } from '../dto/update-gym.dto';
-import { Protected } from 'src/common/decorators';
+import { Protected, Public } from 'src/common/decorators';
 
 /**
  * Controller for managing gym-related operations.
@@ -49,6 +49,7 @@ export class GymsController {
    * @returns Promise<Gym> The newly created gym entity
    */
   @Post()
+  @Public()
   create(@Body() createGymDto: CreateGymDto) {
     return this.gymsService.create(createGymDto);
   }

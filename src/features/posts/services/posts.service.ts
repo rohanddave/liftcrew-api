@@ -2,15 +2,25 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Post } from '../entities/post.entity';
 import { Kudos } from '../entities/kudos.entity';
 import { WorkoutsService } from 'src/features/workouts/services/workouts.service';
 import { UsersService } from 'src/features/users/services/users.service';
+import { FeedWriteService } from 'src/features/feed/services/feed-write.service';
 import { CreatePostDto } from '../dto/create-post.dto';
 import { UpdatePostDto } from '../dto/update-post.dto';
+import {
+  NOTIFICATION_EVENTS,
+  PostCreatedEvent,
+  KudosReceivedEvent,
+} from '../../notifications/interfaces/events.interface';
+import { NotificationType } from '../../notifications/types';
 
 @Injectable()
 export class PostsService {
@@ -21,6 +31,9 @@ export class PostsService {
     private readonly kudosRepository: Repository<Kudos>,
     private readonly workoutsService: WorkoutsService,
     private readonly usersService: UsersService,
+    @Inject(forwardRef(() => FeedWriteService))
+    private readonly feedWriteService: FeedWriteService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   /**
@@ -52,7 +65,25 @@ export class PostsService {
       createdById: userId,
     });
 
-    return await this.postRepository.save(post);
+    const savedPost = await this.postRepository.save(post);
+
+    // Trigger fan-out to followers' feeds
+    await this.feedWriteService.fanOutPost(
+      savedPost.id,
+      userId,
+      savedPost.createdAt,
+    );
+
+    // Emit event for notifications
+    const postCreatedEvent: PostCreatedEvent = {
+      actorId: userId,
+      type: NotificationType.NEW_POST,
+      postId: savedPost.id,
+      caption: savedPost.caption,
+    };
+    this.eventEmitter.emit(NOTIFICATION_EVENTS.POST_CREATED, postCreatedEvent);
+
+    return savedPost;
   }
 
   /**
@@ -178,6 +209,22 @@ export class PostsService {
 
     // Increment the kudos count for the post creator
     await this.usersService.incrementKudosCount(post.createdById);
+
+    // Trigger kudos fan-out to followers' feeds
+    await this.feedWriteService.fanOutKudos(
+      savedKudos,
+      savedKudos.createdAt,
+    );
+
+    // Emit event for notifications
+    const kudosReceivedEvent: KudosReceivedEvent = {
+      actorId: userId,
+      type: NotificationType.KUDOS_RECEIVED,
+      kudosId: savedKudos.id,
+      postId,
+      postCreatorId: post.createdById,
+    };
+    this.eventEmitter.emit(NOTIFICATION_EVENTS.KUDOS_RECEIVED, kudosReceivedEvent);
 
     return savedKudos;
   }

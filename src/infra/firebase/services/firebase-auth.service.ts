@@ -103,4 +103,19 @@ export class FirebaseAuthService implements OnModuleInit {
       throw new Error(`Failed to update user: ${error.message}`);
     }
   }
+
+  /**
+   * Get the Firebase app instance
+   * Used by other Firebase services (e.g., messaging)
+   */
+  getApp(): admin.app.App {
+    return this.app;
+  }
+
+  /**
+   * Check if Firebase is initialized and ready
+   */
+  isReady(): boolean {
+    return !!this.app;
+  }
 }

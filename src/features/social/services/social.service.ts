@@ -4,14 +4,21 @@ import {
   BadRequestException,
   Inject,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { FollowsRepository } from '../repositories/follows-repository.interface';
 import { FollowStatus } from '../types';
+import {
+  NOTIFICATION_EVENTS,
+  NewFollowerEvent,
+} from '../../notifications/interfaces/events.interface';
+import { NotificationType } from '../../notifications/types';
 
 @Injectable()
 export class SocialService {
   constructor(
     @Inject('FollowsRepository')
     private readonly followsRepository: FollowsRepository,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   /**
@@ -69,6 +76,15 @@ export class SocialService {
     }
 
     await this.followsRepository.acceptFollowRequest(followerId, followeeId);
+
+    // Emit event for notifications
+    const newFollowerEvent: NewFollowerEvent = {
+      actorId: followerId,
+      type: NotificationType.NEW_FOLLOWER,
+      followerId,
+      followeeId,
+    };
+    this.eventEmitter.emit(NOTIFICATION_EVENTS.NEW_FOLLOWER, newFollowerEvent);
   }
 
   /**
