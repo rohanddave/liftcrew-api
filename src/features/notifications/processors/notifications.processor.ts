@@ -152,23 +152,18 @@ export class NotificationsProcessor {
         notification: {
           title: payload.title,
           body: payload.body,
-          imageUrl: payload.imageUrl,
+          // imageUrl: payload.imageUrl,
         },
         data: payload.data || {},
-        android: {
-          priority: 'high',
-          notification: {
-            sound: 'default',
-          },
-        },
+        // android: {
+        //   priority: 'high',
+        //   notification: {
+        //     sound: 'default',
+        //   },
+        // },
         apns: {
-          headers: {
-            'apns-priority': '10',
-          },
           payload: {
-            aps: {
-              sound: 'default',
-            },
+            aps: { sound: 'default' },
           },
         },
       };

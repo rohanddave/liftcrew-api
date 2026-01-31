@@ -1,14 +1,14 @@
-import { Inject, Injectable } from '@nestjs/common';
-import * as admin from 'firebase-admin';
+import { Injectable } from '@nestjs/common';
 import {
   BatchResponse,
   Message,
   MulticastMessage,
 } from 'firebase-admin/lib/messaging/messaging-api';
+import { FirebaseBase } from './firebase-base';
 
 @Injectable()
 export class FirebasePushNotificationsService {
-  constructor(@Inject('FIREBASE_APP') private firebaseApp: admin.app.App) {}
+  constructor(private firebaseBase: FirebaseBase) {}
 
   /**
    * Sends a notification message to a single device.
@@ -18,10 +18,15 @@ export class FirebasePushNotificationsService {
    */
   async sendNotification(message: Message): Promise<string> {
     try {
-      const messaging = this.firebaseApp.messaging();
+      const app = this.firebaseBase.getApp();
+      const messaging = app.messaging();
       const response = await messaging.send(message);
       return response;
     } catch (e) {
+      console.error(
+        '[FirebasePushNotificationsService]: Error sending notification:',
+        e,
+      );
       return '';
     }
   }
@@ -36,7 +41,8 @@ export class FirebasePushNotificationsService {
     messages: Message[],
   ): Promise<BatchResponse | undefined> {
     try {
-      const messaging = this.firebaseApp.messaging();
+      const app = this.firebaseBase.getApp();
+      const messaging = app.messaging();
       return messaging.sendEach(messages);
     } catch (e) {
       return undefined;
@@ -53,7 +59,8 @@ export class FirebasePushNotificationsService {
     multicastMessage: MulticastMessage,
   ): Promise<BatchResponse | undefined> {
     try {
-      const messaging = this.firebaseApp.messaging();
+      const app = this.firebaseBase.getApp();
+      const messaging = app.messaging();
       return messaging.sendEachForMulticast(multicastMessage);
     } catch (e) {
       return undefined;

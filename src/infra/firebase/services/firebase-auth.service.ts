@@ -1,38 +1,11 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Injectable } from '@nestjs/common';
 import * as admin from 'firebase-admin';
 import { FirebaseAuthUser, FirebaseDecodedToken } from '../types';
+import { FirebaseBase } from './firebase-base';
 
 @Injectable()
-export class FirebaseAuthService implements OnModuleInit {
-  private app: admin.app.App;
-
-  constructor(private configService: ConfigService) {}
-
-  async onModuleInit() {
-    const serviceAccount = this.configService.get<string>(
-      'FIREBASE_SERVICE_ACCOUNT',
-    );
-
-    if (!serviceAccount) {
-      console.warn(
-        'FIREBASE_SERVICE_ACCOUNT not configured. Firebase services will not be available.',
-      );
-      return;
-    }
-
-    try {
-      const serviceAccountJson = JSON.parse(serviceAccount);
-
-      this.app = admin.initializeApp({
-        credential: admin.credential.cert(serviceAccountJson),
-      });
-
-      console.log('Firebase Admin initialized successfully');
-    } catch (error) {
-      console.error('Failed to initialize Firebase Admin:', error);
-    }
-  }
+export class FirebaseAuthService {
+  constructor(private firebaseBase: FirebaseBase) {}
 
   /**
    * Verify any Firebase ID token
@@ -40,7 +13,8 @@ export class FirebaseAuthService implements OnModuleInit {
    */
   async verifyIdToken(idToken: string): Promise<FirebaseDecodedToken> {
     try {
-      return await this.app.auth().verifyIdToken(idToken);
+      const app = this.firebaseBase.getApp();
+      return await app.auth().verifyIdToken(idToken);
     } catch (error) {
       throw new Error(`Token verification failed: ${error.message}`);
     }
@@ -51,7 +25,8 @@ export class FirebaseAuthService implements OnModuleInit {
    */
   async getUserByUid(uid: string): Promise<FirebaseAuthUser> {
     try {
-      return await this.app.auth().getUser(uid);
+      const app = this.firebaseBase.getApp();
+      return await app.auth().getUser(uid);
     } catch (error) {
       throw new Error(`Failed to get user: ${error.message}`);
     }
@@ -62,7 +37,8 @@ export class FirebaseAuthService implements OnModuleInit {
    */
   async getUserByEmail(email: string): Promise<FirebaseAuthUser> {
     try {
-      return await this.app.auth().getUserByEmail(email);
+      const app = this.firebaseBase.getApp();
+      return await app.auth().getUserByEmail(email);
     } catch (error) {
       throw new Error(`Failed to get user: ${error.message}`);
     }
@@ -73,7 +49,8 @@ export class FirebaseAuthService implements OnModuleInit {
    */
   async getUserByPhoneNumber(phoneNumber: string): Promise<FirebaseAuthUser> {
     try {
-      return await this.app.auth().getUserByPhoneNumber(phoneNumber);
+      const app = this.firebaseBase.getApp();
+      return await app.auth().getUserByPhoneNumber(phoneNumber);
     } catch (error) {
       throw new Error(`Failed to get user: ${error.message}`);
     }
@@ -84,7 +61,8 @@ export class FirebaseAuthService implements OnModuleInit {
    */
   async deleteUser(uid: string): Promise<void> {
     try {
-      await this.app.auth().deleteUser(uid);
+      const app = this.firebaseBase.getApp();
+      await app.auth().deleteUser(uid);
     } catch (error) {
       throw new Error(`Failed to delete user: ${error.message}`);
     }
@@ -98,7 +76,8 @@ export class FirebaseAuthService implements OnModuleInit {
     properties: admin.auth.UpdateRequest,
   ): Promise<FirebaseAuthUser> {
     try {
-      return await this.app.auth().updateUser(uid, properties);
+      const app = this.firebaseBase.getApp();
+      return await app.auth().updateUser(uid, properties);
     } catch (error) {
       throw new Error(`Failed to update user: ${error.message}`);
     }
@@ -109,13 +88,13 @@ export class FirebaseAuthService implements OnModuleInit {
    * Used by other Firebase services (e.g., messaging)
    */
   getApp(): admin.app.App {
-    return this.app;
+    return this.firebaseBase.getApp();
   }
 
   /**
    * Check if Firebase is initialized and ready
    */
   isReady(): boolean {
-    return !!this.app;
+    return this.firebaseBase.isReady();
   }
 }
