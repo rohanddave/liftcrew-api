@@ -62,6 +62,7 @@ export class PostsService {
       title: createPostDto.title,
       caption: createPostDto.caption,
       workoutParticipantId: workoutParticipant.id,
+      workoutId: createPostDto.workoutId,
       createdById: userId,
     });
 

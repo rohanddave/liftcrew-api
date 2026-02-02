@@ -98,7 +98,7 @@ export class FeedService {
         ? feedItems[feedItems.length - 1].activityAt.toISOString()
         : null;
 
-    console.log('Hydrated Feed Items:', hydratedItems);
+    console.log('Hydrated Feed Items:', JSON.stringify(hydratedItems));
 
     return {
       items: hydratedItems,
@@ -130,7 +130,7 @@ export class FeedService {
       postIds.length > 0
         ? this.postRepo.find({
             where: { id: In(postIds) },
-            relations: ['createdBy'],
+            relations: { createdBy: true },
           })
         : Promise.resolve([]),
       this.userRepo.find({
@@ -156,19 +156,7 @@ export class FeedService {
           username: actor?.username || 'Unknown',
           imageUrl: actor?.imageUrl,
         },
-        post: post
-          ? {
-              id: post.id,
-              title: post.title,
-              caption: post.caption,
-              kudosCount: post.kudosCount,
-              createdAt: post.createdAt,
-              createdBy: {
-                id: post.createdBy.id,
-                username: post.createdBy.username,
-              },
-            }
-          : undefined,
+        post: post,
         kudos: item.kudosId
           ? {
               id: item.kudosId,
