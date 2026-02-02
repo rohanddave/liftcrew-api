@@ -6,6 +6,7 @@ import { Gym } from './entities/gym.entity';
 import { GymEquipment } from './entities/gym-equipment.entity';
 import { GymEquipmentController } from './controllers/gym-equipment.controller';
 import { GymEquipmentService } from './services/gym-equipment.service';
+import { User } from '../users/entities/user.entity';
 
 /**
  * Gyms Module
@@ -19,7 +20,7 @@ import { GymEquipmentService } from './services/gym-equipment.service';
  * - GymsService: For use in other modules that need gym data access
  */
 @Module({
-  imports: [TypeOrmModule.forFeature([Gym, GymEquipment])],
+  imports: [TypeOrmModule.forFeature([Gym, GymEquipment, User])],
   controllers: [GymsController, GymEquipmentController],
   providers: [GymsService, GymEquipmentService],
   exports: [GymsService],

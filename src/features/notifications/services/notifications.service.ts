@@ -9,6 +9,7 @@ import {
   PostCreatedEvent,
   KudosReceivedEvent,
   NewFollowerEvent,
+  GymCheckInEvent,
   NOTIFICATION_EVENTS,
 } from '../interfaces/events.interface';
 import { UserNotificationSettings } from '../entities/user-notification-settings.entity';
@@ -300,6 +301,63 @@ export class NotificationsService {
       );
     } catch (error) {
       this.logger.error('Failed to handle new follower event:', error);
+    }
+  }
+
+  /**
+   * Event listener: Gym check-in
+   * Fans out notifications to all followers
+   */
+  @OnEvent(NOTIFICATION_EVENTS.GYM_CHECK_IN)
+  async handleGymCheckIn(event: GymCheckInEvent): Promise<void> {
+    this.logger.log(
+      `Handling gym check-in event: ${event.actorId} checked in at ${event.gymName}`,
+    );
+
+    try {
+      const stats = await this.socialService.getStats(event.actorId);
+
+      const payload = {
+        title: 'Gym Check-in',
+        body: `Someone you follow checked in at ${event.gymName}`,
+        data: {
+          type: NotificationType.GYM_CHECK_IN,
+          gymId: event.gymId,
+          gymName: event.gymName,
+          actorId: event.actorId,
+        },
+      };
+
+      if (stats.followerCount < this.DIRECT_SEND_THRESHOLD) {
+        // Direct send for small follower count
+        await this.directFanOut(
+          event.actorId,
+          NotificationType.GYM_CHECK_IN,
+          event.gymId,
+          'gym',
+          payload,
+        );
+      } else {
+        // Enqueue job for large follower count
+        const jobData: FanOutNotificationJobData = {
+          actorId: event.actorId,
+          type: NotificationType.GYM_CHECK_IN,
+          entityId: event.gymId,
+          entityType: 'gym',
+          payload,
+          estimatedTotal: stats.followerCount,
+        };
+
+        await this.notificationsQueue.add('fanout-notification', jobData, {
+          priority: 1,
+        });
+
+        this.logger.log(
+          `Enqueued fan-out notification for gym check-in at ${event.gymName}`,
+        );
+      }
+    } catch (error) {
+      this.logger.error('Failed to handle gym check-in event:', error);
     }
   }
 

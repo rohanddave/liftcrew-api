@@ -7,6 +7,7 @@ export enum NotificationType {
   FOLLOW_ACCEPTED = 'follow_accepted',
   COMMENT = 'comment',
   MENTION = 'mention',
+  GYM_CHECK_IN = 'gym_check_in',
 }
 
 export enum DeliveryStatus {

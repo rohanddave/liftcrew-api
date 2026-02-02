@@ -46,13 +46,23 @@ export interface FollowAcceptedEvent extends NotificationEvent {
 }
 
 /**
+ * Event emitted when a user checks in at their gym
+ */
+export interface GymCheckInEvent extends NotificationEvent {
+  type: NotificationType.GYM_CHECK_IN;
+  gymId: string;
+  gymName: string;
+}
+
+/**
  * Union type of all notification events
  */
 export type AnyNotificationEvent =
   | PostCreatedEvent
   | KudosReceivedEvent
   | NewFollowerEvent
-  | FollowAcceptedEvent;
+  | FollowAcceptedEvent
+  | GymCheckInEvent;
 
 /**
  * Event names for EventEmitter2
@@ -62,4 +72,5 @@ export const NOTIFICATION_EVENTS = {
   KUDOS_RECEIVED: 'notification.kudos.received',
   NEW_FOLLOWER: 'notification.follower.new',
   FOLLOW_ACCEPTED: 'notification.follower.accepted',
+  GYM_CHECK_IN: 'notification.gym.checkin',
 } as const;

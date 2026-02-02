@@ -1,9 +1,20 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Gym } from '../entities/gym.entity';
 import { CreateGymDto } from '../dto/create-gym.dto';
 import { UpdateGymDto } from '../dto/update-gym.dto';
+import { User } from 'src/features/users/entities/user.entity';
+import {
+  NOTIFICATION_EVENTS,
+  GymCheckInEvent,
+} from 'src/features/notifications/interfaces/events.interface';
+import { NotificationType } from 'src/features/notifications/types';
 
 /**
  * Service responsible for managing gym business logic and database operations.
@@ -11,9 +22,14 @@ import { UpdateGymDto } from '../dto/update-gym.dto';
  */
 @Injectable()
 export class GymsService {
+  private readonly CHECK_IN_THRESHOLD_METERS = 200; // 200 meters
+
   constructor(
     @InjectRepository(Gym)
     private readonly gymRepository: Repository<Gym>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   /**
@@ -86,5 +102,95 @@ export class GymsService {
     const gym = await this.findOneOrFail(id);
     // Remove the gym from the database
     await this.gymRepository.remove(gym);
+  }
+
+  /**
+   * Check in a user at their home gym.
+   * Validates that the user's location is within the threshold distance from their home gym.
+   * If valid, emits a GYM_CHECK_IN event to notify followers.
+   * @param userId - The UUID of the user checking in
+   * @param lat - The user's current latitude
+   * @param lng - The user's current longitude
+   * @returns Promise<{ success: boolean; message: string; gym?: Gym }>
+   * @throws BadRequestException if user has no home gym or is too far away
+   */
+  async checkIn(
+    userId: string,
+    lat: number,
+    lng: number,
+  ): Promise<{ success: boolean; message: string; gym?: Gym }> {
+    // Get the user with their home gym
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['homeGym'],
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
+    if (!user.homeGym) {
+      throw new BadRequestException('You have not set a home gym');
+    }
+
+    const homeGym = user.homeGym;
+
+    // Calculate distance between user's location and home gym
+    const distance = this.calculateDistance(
+      lat,
+      lng,
+      homeGym.lat,
+      homeGym.lng,
+    );
+
+    if (distance > this.CHECK_IN_THRESHOLD_METERS) {
+      throw new BadRequestException(
+        `You are too far from your home gym (${Math.round(distance)}m away, threshold is ${this.CHECK_IN_THRESHOLD_METERS}m)`,
+      );
+    }
+
+    // Emit check-in event for notifications
+    const gymCheckInEvent: GymCheckInEvent = {
+      actorId: userId,
+      type: NotificationType.GYM_CHECK_IN,
+      gymId: homeGym.id,
+      gymName: homeGym.name,
+    };
+    this.eventEmitter.emit(NOTIFICATION_EVENTS.GYM_CHECK_IN, gymCheckInEvent);
+
+    return {
+      success: true,
+      message: `Successfully checked in at ${homeGym.name}`,
+      gym: homeGym,
+    };
+  }
+
+  /**
+   * Calculate distance between two coordinates using the Haversine formula.
+   * Returns distance in meters.
+   * @param lat1 - Latitude of first point
+   * @param lng1 - Longitude of first point
+   * @param lat2 - Latitude of second point
+   * @param lng2 - Longitude of second point
+   * @returns Distance in meters
+   */
+  private calculateDistance(
+    lat1: number,
+    lng1: number,
+    lat2: number,
+    lng2: number,
+  ): number {
+    const R = 6371e3; // Earth's radius in meters
+    const φ1 = (lat1 * Math.PI) / 180;
+    const φ2 = (lat2 * Math.PI) / 180;
+    const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+    const Δλ = ((lng2 - lng1) * Math.PI) / 180;
+
+    const a =
+      Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+      Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c; // Distance in meters
   }
 }

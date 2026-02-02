@@ -8,11 +8,14 @@ import {
   Param,
   HttpCode,
   HttpStatus,
+  Req,
 } from '@nestjs/common';
 import { GymsService } from '../services/gyms.service';
 import { CreateGymDto } from '../dto/create-gym.dto';
 import { UpdateGymDto } from '../dto/update-gym.dto';
+import { CheckInDto } from '../dto/check-in.dto';
 import { Protected, Public } from 'src/common/decorators';
+import { RequestWithUser } from 'src/common/types/request.type';
 
 /**
  * Controller for managing gym-related operations.
@@ -76,5 +79,23 @@ export class GymsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id') id: string) {
     return this.gymsService.remove(id);
+  }
+
+  /**
+   * Check in at the user's home gym.
+   * Validates that the user's location is within threshold distance from their home gym.
+   * If valid, queues notifications to all followers.
+   * @param req - The request object containing the authenticated user
+   * @param checkInDto - The data transfer object containing lat/lng coordinates
+   * @returns Promise<{ success: boolean; message: string; gym?: Gym }>
+   * @throws BadRequestException if user has no home gym or is too far away
+   */
+  @Post('check-in')
+  checkIn(@Req() req: RequestWithUser, @Body() checkInDto: CheckInDto) {
+    return this.gymsService.checkIn(
+      req.user.id,
+      checkInDto.lat,
+      checkInDto.lng,
+    );
   }
 }
