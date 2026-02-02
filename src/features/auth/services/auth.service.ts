@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { User } from '../../users/entities/user.entity';
+import { NotificationsService } from 'src/features/notifications/services/notifications.service';
 
 /**
  * Service responsible for authentication-related business logic.
@@ -7,7 +8,7 @@ import { User } from '../../users/entities/user.entity';
  */
 @Injectable()
 export class AuthService {
-  constructor() {}
+  constructor(private readonly notificationsService: NotificationsService) {}
 
   /**
    * Logs out a user from the application.
@@ -18,8 +19,8 @@ export class AuthService {
    * @param user - The authenticated user to log out
    * @returns void
    */
-  logout(user: User): void {
-    // TODO: Implement logout logic if needed (e.g., token revocation, session cleanup)
-    // For now, logout is handled client-side by discarding tokens
+  async logout(user: User): Promise<void> {
+    await this.notificationsService.unregisterFcmToken(user.id);
+    return;
   }
 }

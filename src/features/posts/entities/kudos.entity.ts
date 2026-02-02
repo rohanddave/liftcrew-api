@@ -10,6 +10,12 @@ import {
 import { Post } from './post.entity';
 import { User } from 'src/features/users/entities/user.entity';
 
+export enum KudosState {
+  PROCESSING = 'processing',
+  COMPLETED = 'completed',
+  FAILED = 'failed',
+}
+
 @Entity('kudos')
 @Unique(['post', 'givenBy'])
 export class Kudos {
@@ -22,6 +28,9 @@ export class Kudos {
 
   @Column({ name: 'post_id' })
   postId: string;
+
+  @Column({ type: 'enum', enum: KudosState, default: KudosState.PROCESSING })
+  state: KudosState;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'given_by' })

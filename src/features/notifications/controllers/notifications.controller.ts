@@ -1,7 +1,6 @@
 import {
   Controller,
   Post,
-  Delete,
   Body,
   Req,
   HttpCode,
@@ -33,23 +32,6 @@ export class NotificationsController {
     return {
       success: true,
       message: 'FCM token registered successfully',
-    };
-  }
-
-  /**
-   * Unregister user's FCM token
-   * @param req - Request with authenticated user
-   */
-  @Delete('unregister-token')
-  @HttpCode(HttpStatus.OK)
-  async unregisterToken(@Req() req) {
-    const userId = req.user.id;
-
-    await this.notificationsService.unregisterFcmToken(userId);
-
-    return {
-      success: true,
-      message: 'FCM token unregistered successfully',
     };
   }
 }

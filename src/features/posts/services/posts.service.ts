@@ -181,6 +181,10 @@ export class PostsService {
       where: { id: postId },
     });
 
+    if (userId === post?.createdById) {
+      throw new BadRequestException('You cannot give kudos to your own post');
+    }
+
     if (!post) {
       throw new NotFoundException(`Post with ID ${postId} not found`);
     }
@@ -207,10 +211,13 @@ export class PostsService {
 
     const savedKudos = await this.kudosRepository.save(kudos);
 
+    // Increment the kudos count on the post
+    await this.postRepository.increment({ id: postId }, 'kudosCount', 1);
+
     // Increment the kudos count for the post creator
     await this.usersService.incrementKudosCount(post.createdById);
 
-    // Trigger kudos fan-out to followers' feeds
+    // Trigger kudos fan-out to update user profile 
     await this.feedWriteService.fanOutKudos(
       savedKudos,
       savedKudos.createdAt,

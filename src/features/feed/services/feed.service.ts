@@ -18,6 +18,7 @@ export interface HydratedFeedItem {
     id: string;
     title: string;
     caption?: string;
+    kudosCount: number;
     createdAt: Date;
     createdBy: {
       id: string;
@@ -97,6 +98,8 @@ export class FeedService {
         ? feedItems[feedItems.length - 1].activityAt.toISOString()
         : null;
 
+    console.log('Hydrated Feed Items:', hydratedItems);
+
     return {
       items: hydratedItems,
       nextCursor,
@@ -158,6 +161,7 @@ export class FeedService {
               id: post.id,
               title: post.title,
               caption: post.caption,
+              kudosCount: post.kudosCount,
               createdAt: post.createdAt,
               createdBy: {
                 id: post.createdBy.id,

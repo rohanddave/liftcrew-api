@@ -42,6 +42,9 @@ export class Post {
   @OneToMany(() => Kudos, (kudos) => kudos.post)
   kudos: Kudos[];
 
+  @Column({ name: 'kudos_count', type: 'int', default: 0 })
+  kudosCount: number;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

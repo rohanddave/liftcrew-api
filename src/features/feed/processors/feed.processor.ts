@@ -2,19 +2,21 @@ import { Processor, Process } from '@nestjs/bull';
 import { Job } from 'bull';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { FeedItem, FeedItemType } from '../entities/feed-item.entity';
 import { Post } from 'src/features/posts/entities/post.entity';
+import { User } from 'src/features/users/entities/user.entity';
 import { SocialService } from 'src/features/social/services/social.service';
-import { FollowStatus } from 'src/features/social/entities/follows.entity';
 import {
   FanOutPostJobData,
   FanOutKudosJobData,
   CleanupFeedJobData,
   BackfillUserFeedJobData,
 } from '../interfaces/job-data.interface';
+import { FollowStatus } from 'src/features/social/types';
+import { Kudos, KudosState } from 'src/features/posts/entities/kudos.entity';
 
-@Processor({ name: 'feed-fanout', concurrency: 5 })
+@Processor('feed-fanout')
 @Injectable()
 export class FeedProcessor {
   private readonly logger = new Logger(FeedProcessor.name);
@@ -22,15 +24,21 @@ export class FeedProcessor {
 
   constructor(
     @InjectRepository(FeedItem)
-    private feedItemRepo: Repository<FeedItem>,
+    private readonly feedItemRepo: Repository<FeedItem>,
     @InjectRepository(Post)
-    private postRepo: Repository<Post>,
-    private socialService: SocialService,
+    private readonly postRepo: Repository<Post>,
+    private readonly socialService: SocialService,
+    private readonly dataSource: DataSource,
   ) {}
 
   @Process('fanout-post')
   async handleFanOutPost(job: Job<FanOutPostJobData>): Promise<any> {
-    const { postId, actorId, activityAt, batchSize = this.BATCH_SIZE } = job.data;
+    const {
+      postId,
+      actorId,
+      activityAt,
+      batchSize = this.BATCH_SIZE,
+    } = job.data;
 
     this.logger.log(`Starting fan-out for post ${postId}`);
 
@@ -41,12 +49,13 @@ export class FeedProcessor {
     try {
       while (hasMore) {
         // Get batch of ACCEPTED followers from Neo4j
-        const followers = await this.socialService.getFollowers(
-          actorId,
-          page,
-          batchSize,
-          FollowStatus.ACCEPTED,
-        );
+        const { data: followers, total } =
+          await this.socialService.getFollowers(
+            actorId,
+            page,
+            batchSize,
+            FollowStatus.ACCEPTED,
+          );
 
         if (followers.length === 0) {
           hasMore = false;
@@ -55,7 +64,7 @@ export class FeedProcessor {
 
         // Create feed items for this batch
         const feedItems = followers.map((follower) => ({
-          userId: follower.id,
+          userId: follower.userId,
           actorId,
           itemType: FeedItemType.POST,
           postId,
@@ -83,7 +92,9 @@ export class FeedProcessor {
         }
       }
 
-      this.logger.log(`Completed fan-out for post ${postId}: ${totalProcessed} followers`);
+      this.logger.log(
+        `Completed fan-out for post ${postId}: ${totalProcessed} followers`,
+      );
 
       return { processed: totalProcessed };
     } catch (error) {
@@ -95,72 +106,30 @@ export class FeedProcessor {
   @Process('fanout-kudos')
   async handleFanOutKudos(job: Job<FanOutKudosJobData>): Promise<any> {
     const { kudosId, postId, kudosGiverId, activityAt } = job.data;
-
     this.logger.log(`Starting kudos fan-out for kudos ${kudosId}`);
-
     try {
       // Get the post to find the creator
       const post = await this.postRepo.findOne({
         where: { id: postId },
       });
-
       if (!post) {
         this.logger.warn(`Post ${postId} not found for kudos ${kudosId}`);
         return { processed: 0 };
       }
 
       const postCreatorId = post.createdById;
-      let totalProcessed = 0;
 
-      // Fan-out kudos_given to kudos giver's followers
-      const giverFollowers = await this.socialService.getFollowers(
-        kudosGiverId,
-        1,
-        this.BATCH_SIZE,
-        FollowStatus.ACCEPTED,
-      );
+      // Use transaction to ensure both operations succeed or fail together
+      await this.dataSource.transaction(async (manager) => {
+        // Update kudos state to COMPLETED
+        await manager.update(Kudos, kudosId, { state: KudosState.COMPLETED });
 
-      if (giverFollowers.length > 0) {
-        const giverFeedItems = giverFollowers.map((follower) => ({
-          userId: follower.id,
-          actorId: kudosGiverId,
-          itemType: FeedItemType.KUDOS_GIVEN,
-          postId,
-          kudosId,
-          activityAt,
-        }));
+        // Increment the post creator's kudos count
+        await manager.increment(User, { id: postCreatorId }, 'kudosCount', 1);
+      });
 
-        await this.batchCreateFeedItems(giverFeedItems);
-        totalProcessed += giverFeedItems.length;
-      }
-
-      // Fan-out kudos_received to post creator's followers (if different from giver)
-      if (postCreatorId !== kudosGiverId) {
-        const creatorFollowers = await this.socialService.getFollowers(
-          postCreatorId,
-          1,
-          this.BATCH_SIZE,
-          FollowStatus.ACCEPTED,
-        );
-
-        if (creatorFollowers.length > 0) {
-          const creatorFeedItems = creatorFollowers.map((follower) => ({
-            userId: follower.id,
-            actorId: postCreatorId,
-            itemType: FeedItemType.KUDOS_RECEIVED,
-            postId,
-            kudosId,
-            activityAt,
-          }));
-
-          await this.batchCreateFeedItems(creatorFeedItems);
-          totalProcessed += creatorFeedItems.length;
-        }
-      }
-
-      this.logger.log(`Completed kudos fan-out for ${kudosId}: ${totalProcessed} followers`);
-
-      return { processed: totalProcessed };
+      this.logger.log(`Completed kudos fan-out for kudos ${kudosId}`);
+      return { processed: 1 };
     } catch (error) {
       this.logger.error(`Error in kudos fan-out for ${kudosId}:`, error);
       throw error;
@@ -176,7 +145,9 @@ export class FeedProcessor {
     try {
       const result = await this.feedItemRepo.delete({ postId });
 
-      this.logger.log(`Cleaned up ${result.affected || 0} feed items for post ${postId}`);
+      this.logger.log(
+        `Cleaned up ${result.affected || 0} feed items for post ${postId}`,
+      );
 
       return { deleted: result.affected || 0 };
     } catch (error) {
@@ -189,7 +160,9 @@ export class FeedProcessor {
   async handleBackfillUser(job: Job<BackfillUserFeedJobData>): Promise<any> {
     const { userId, followedUserId, backfillDays = 30 } = job.data;
 
-    this.logger.log(`Backfilling feed for user ${userId} with posts from ${followedUserId}`);
+    this.logger.log(
+      `Backfilling feed for user ${userId} with posts from ${followedUserId}`,
+    );
 
     try {
       // Get followed user's posts from last N days
@@ -220,7 +193,9 @@ export class FeedProcessor {
 
       await this.batchCreateFeedItems(feedItems);
 
-      this.logger.log(`Backfilled ${feedItems.length} posts for user ${userId}`);
+      this.logger.log(
+        `Backfilled ${feedItems.length} posts for user ${userId}`,
+      );
 
       return { processed: feedItems.length };
     } catch (error) {

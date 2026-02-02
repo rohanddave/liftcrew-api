@@ -3,7 +3,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { QueueModule } from '../../infra/queue/queue.module';
 import { FirebaseModule } from '../../infra/firebase/firebase.module';
 import { SocialModule } from '../social/social.module';
-import { AuthModule } from '../auth/auth.module';
 import { UserNotificationSettings } from './entities/user-notification-settings.entity';
 import { NotificationsController } from './controllers/notifications.controller';
 import { NotificationsService } from './services/notifications.service';

@@ -8,6 +8,7 @@ import { TokenService } from './services/token.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RefreshToken } from './entities/refresh-tokens.entity';
 import { UsersModule } from '../users/users.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 /**
  * Authentication Module
@@ -33,6 +34,7 @@ import { UsersModule } from '../users/users.module';
     FirebaseModule,
     TypeOrmModule.forFeature([RefreshToken]),
     UsersModule,
+    NotificationsModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, TokenService, JWTTokenGuard, JWTTokenValidation],
