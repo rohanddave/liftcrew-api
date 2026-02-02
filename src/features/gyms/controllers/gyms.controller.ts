@@ -91,11 +91,13 @@ export class GymsController {
    * @throws BadRequestException if user has no home gym or is too far away
    */
   @Post('check-in')
-  checkIn(@Req() req: RequestWithUser, @Body() checkInDto: CheckInDto) {
-    return this.gymsService.checkIn(
+  async checkIn(@Req() req: RequestWithUser, @Body() checkInDto: CheckInDto) {
+    const result = await this.gymsService.checkIn(
       req.user.id,
       checkInDto.lat,
       checkInDto.lng,
     );
+    console.log('Check-in result:', result);
+    return result;
   }
 }

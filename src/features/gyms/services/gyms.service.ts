@@ -122,26 +122,22 @@ export class GymsService {
     // Get the user with their home gym
     const user = await this.userRepository.findOne({
       where: { id: userId },
-      relations: ['homeGym'],
     });
 
     if (!user) {
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
 
-    if (!user.homeGym) {
+    if (!user.homeGymId) {
       throw new BadRequestException('You have not set a home gym');
     }
 
-    const homeGym = user.homeGym;
+    const homeGym = await this.gymRepository.findOne({
+      where: { id: user.homeGymId },
+    });
 
     // Calculate distance between user's location and home gym
-    const distance = this.calculateDistance(
-      lat,
-      lng,
-      homeGym.lat,
-      homeGym.lng,
-    );
+    const distance = this.calculateDistance(lat, lng, homeGym.lat, homeGym.lng);
 
     if (distance > this.CHECK_IN_THRESHOLD_METERS) {
       throw new BadRequestException(
