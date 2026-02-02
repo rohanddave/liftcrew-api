@@ -14,18 +14,16 @@ import {
 } from '../interfaces/events.interface';
 import { UserNotificationSettings } from '../entities/user-notification-settings.entity';
 import { encrypt, decrypt } from '../utils/encryption.util';
-import { Platform, NotificationType } from '../types';
+import { NotificationType } from '../types';
 import {
   FanOutNotificationJobData,
   SendNotificationJobData,
 } from '../interfaces/job-data.interface';
 import { SocialService } from '../../social/services/social.service';
-import { FollowStatus } from '../../social/types';
 
 @Injectable()
 export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
-  private readonly DIRECT_SEND_THRESHOLD = 10;
   private readonly encryptionKey: string;
 
   constructor(
@@ -179,6 +177,11 @@ export class NotificationsService {
     try {
       const stats = await this.socialService.getStats(event.actorId);
 
+      if (stats.followerCount === 0) {
+        this.logger.debug('No followers to notify');
+        return;
+      }
+
       const payload = {
         title: 'New Post',
         body: event.caption || 'Someone you follow posted a workout',
@@ -189,34 +192,22 @@ export class NotificationsService {
         },
       };
 
-      if (stats.followerCount < this.DIRECT_SEND_THRESHOLD) {
-        // Direct send for small follower count
-        await this.directFanOut(
-          event.actorId,
-          NotificationType.NEW_POST,
-          event.postId,
-          'post',
-          payload,
-        );
-      } else {
-        // Enqueue job for large follower count
-        const jobData: FanOutNotificationJobData = {
-          actorId: event.actorId,
-          type: NotificationType.NEW_POST,
-          entityId: event.postId,
-          entityType: 'post',
-          payload,
-          estimatedTotal: stats.followerCount,
-        };
+      const jobData: FanOutNotificationJobData = {
+        actorId: event.actorId,
+        type: NotificationType.NEW_POST,
+        entityId: event.postId,
+        entityType: 'post',
+        payload,
+        estimatedTotal: stats.followerCount,
+      };
 
-        await this.notificationsQueue.add('fanout-notification', jobData, {
-          priority: 1,
-        });
+      await this.notificationsQueue.add('fanout-notification', jobData, {
+        priority: 1,
+      });
 
-        this.logger.log(
-          `Enqueued fan-out notification for post ${event.postId}`,
-        );
-      }
+      this.logger.log(
+        `Enqueued fan-out notification for post ${event.postId} (${stats.followerCount} followers)`,
+      );
     } catch (error) {
       this.logger.error('Failed to handle post created event:', error);
     }
@@ -317,6 +308,11 @@ export class NotificationsService {
     try {
       const stats = await this.socialService.getStats(event.actorId);
 
+      if (stats.followerCount === 0) {
+        this.logger.debug('No followers to notify');
+        return;
+      }
+
       const payload = {
         title: 'Gym Check-in',
         body: `Someone you follow checked in at ${event.gymName}`,
@@ -328,87 +324,25 @@ export class NotificationsService {
         },
       };
 
-      if (stats.followerCount < this.DIRECT_SEND_THRESHOLD) {
-        // Direct send for small follower count
-        await this.directFanOut(
-          event.actorId,
-          NotificationType.GYM_CHECK_IN,
-          event.gymId,
-          'gym',
-          payload,
-        );
-      } else {
-        // Enqueue job for large follower count
-        const jobData: FanOutNotificationJobData = {
-          actorId: event.actorId,
-          type: NotificationType.GYM_CHECK_IN,
-          entityId: event.gymId,
-          entityType: 'gym',
-          payload,
-          estimatedTotal: stats.followerCount,
-        };
+      const jobData: FanOutNotificationJobData = {
+        actorId: event.actorId,
+        type: NotificationType.GYM_CHECK_IN,
+        entityId: event.gymId,
+        entityType: 'gym',
+        payload,
+        estimatedTotal: stats.followerCount,
+      };
 
-        await this.notificationsQueue.add('fanout-notification', jobData, {
-          priority: 1,
-        });
+      await this.notificationsQueue.add('fanout-notification', jobData, {
+        priority: 1,
+      });
 
-        this.logger.log(
-          `Enqueued fan-out notification for gym check-in at ${event.gymName}`,
-        );
-      }
+      this.logger.log(
+        `Enqueued fan-out notification for gym check-in at ${event.gymName} (${stats.followerCount} followers)`,
+      );
     } catch (error) {
       this.logger.error('Failed to handle gym check-in event:', error);
     }
   }
 
-  /**
-   * Direct fan-out for small follower counts (< threshold)
-   * Avoids queue overhead for small audiences
-   */
-  private async directFanOut(
-    actorId: string,
-    type: NotificationType,
-    entityId: string,
-    entityType: string,
-    payload: any,
-  ): Promise<void> {
-    this.logger.log(`Direct fan-out for actor ${actorId}`);
-
-    try {
-      const { data: followers } = await this.socialService.getFollowers(
-        actorId,
-        1,
-        this.DIRECT_SEND_THRESHOLD,
-        FollowStatus.ACCEPTED,
-      );
-
-      if (followers.length === 0) {
-        this.logger.debug('No followers to notify');
-        return;
-      }
-
-      // Enqueue individual notification jobs for each follower
-      const jobs = followers.map((follower) => ({
-        data: {
-          userId: follower.userId,
-          type,
-          entityId,
-          entityType,
-          actorId,
-          payload,
-        } as SendNotificationJobData,
-        opts: { priority: 2 },
-      }));
-
-      await this.notificationsQueue.addBulk(
-        jobs.map((job) => ({ name: 'send-notification', ...job })),
-      );
-
-      this.logger.log(
-        `Direct fan-out: enqueued ${followers.length} notifications`,
-      );
-    } catch (error) {
-      this.logger.error('Failed to perform direct fan-out:', error);
-    }
-  }
 }
