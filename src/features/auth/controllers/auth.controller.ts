@@ -28,7 +28,6 @@ export class AuthController {
   async login(@Req() req: RequestWithTokenAndEmail) {
     const user = await this.usersService.findOneByEmail(req.email);
     const response = { isNewUser: !user };
-    console.log('Login Response:', response);
     return response;
   }
 
@@ -57,7 +56,6 @@ export class AuthController {
   @UseGuards(SocialTokenGuard)
   async exchangeToken(@Req() req: RequestWithToken) {
     const response = await this.tokenService.exchangeFirebaseToken(req.token);
-    console.log('Exchange Token Response:', response);
     return response;
   }
 

@@ -46,9 +46,7 @@ export class UsersController {
     const { user } = request;
     const users = await this.usersSearchService.searchByUsername(username);
     // exclude current user
-    // return users.filter((u) => u.id !== user.id);
-    console.log('Searched users:', users);
-    return users;
+    return users.filter((u) => u.id !== user.id);
   }
 
   /**
