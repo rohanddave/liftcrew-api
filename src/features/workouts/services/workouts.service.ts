@@ -349,6 +349,7 @@ export class WorkoutsService {
     });
 
     if (!participant) {
+      console.log('participant not found');
       throw new NotFoundException(
         `You are not a participant in workout ${workoutId}`,
       );
@@ -357,6 +358,7 @@ export class WorkoutsService {
     // Validate that finishedAt is not in the future
     const now = new Date();
     if (finishedAt > now) {
+      console.log('finishedAt is in the future');
       throw new BadRequestException(
         'Cannot finish workout: finishedAt cannot be in the future',
       );
@@ -364,12 +366,16 @@ export class WorkoutsService {
 
     // Validate that startAt is on the same day as current time
     const startAtDate = new Date(participant.startAt);
+    console.log('startAtDate:', startAtDate);
+    console.log('finishedAt: ', finishedAt);
+
     const isSameDay =
       startAtDate.getFullYear() === now.getFullYear() &&
       startAtDate.getMonth() === now.getMonth() &&
       startAtDate.getDate() === now.getDate();
 
     if (!isSameDay) {
+      console.log('not the same day');
       throw new BadRequestException(
         'Cannot finish workout: workout can only be finished on the day it was scheduled',
       );
@@ -381,6 +387,7 @@ export class WorkoutsService {
     });
 
     if (exerciseCount === 0) {
+      console.log('no exercises tracked');
       throw new BadRequestException(
         'Cannot finish workout: at least one exercise must be tracked',
       );
@@ -390,7 +397,7 @@ export class WorkoutsService {
     participant.finishedAt = finishedAt;
 
     // Save and return the updated participant
-    return await this.workoutParticipantRepository.save(participant);
+    return this.workoutParticipantRepository.save(participant);
   }
 
   /**

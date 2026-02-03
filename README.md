@@ -102,6 +102,76 @@ The project is configured with Firebase Authentication for Phone, Google, and Ap
 
 See `src/firebase/README.md` for detailed documentation.
 
+## Mock Workout Seed Queries
+
+Use these queries to seed mock workouts for the `info@oneprediction.app` user against the default gym. Covers all calendar statuses: missed, finished, in-progress, and scheduled.
+
+```sql
+-- 1. MISSED: started day before yesterday (> 4 hours ago, no finishedAt)
+INSERT INTO workouts (id, name, created_by, "createdAt")
+VALUES ('44444444-4444-4444-4444-444444444444', 'Missed Workout', '2c453b67-44bb-4f13-87ec-f7d767396b31', NOW() - INTERVAL '2 days');
+
+INSERT INTO workout_participants (id, workout_id, user_id, gym_id, role, "startAt", "finishedAt", "joinedAt")
+VALUES (
+    'dddddddd-dddd-dddd-dddd-dddddddddddd',
+    '44444444-4444-4444-4444-444444444444',
+    '2c453b67-44bb-4f13-87ec-f7d767396b31',
+    '46c163b6-ee46-41f4-a508-c6f5554871a6',
+    'owner',
+    NOW() - INTERVAL '2 days',       -- started day before yesterday
+    NULL,                            -- never finished
+    NOW() - INTERVAL '2 days'
+);
+
+-- 2. FINISHED: completed yesterday
+INSERT INTO workouts (id, name, created_by, "createdAt")
+VALUES ('33333333-3333-3333-3333-333333333333', 'Completed Workout', '2c453b67-44bb-4f13-87ec-f7d767396b31', NOW() - INTERVAL '1 day');
+
+INSERT INTO workout_participants (id, workout_id, user_id, gym_id, role, "startAt", "finishedAt", "joinedAt")
+VALUES (
+    'cccccccc-cccc-cccc-cccc-cccccccccccc',
+    '33333333-3333-3333-3333-333333333333',
+    '2c453b67-44bb-4f13-87ec-f7d767396b31',
+    '46c163b6-ee46-41f4-a508-c6f5554871a6',
+    'owner',
+    NOW() - INTERVAL '1 day',        -- started yesterday
+    NOW() - INTERVAL '1 day' + INTERVAL '1 hour',  -- finished yesterday
+    NOW() - INTERVAL '1 day'
+);
+
+-- 3. IN_PROGRESS: started today (within 4 hours), no finishedAt
+INSERT INTO workouts (id, name, created_by, "createdAt")
+VALUES ('11111111-1111-1111-1111-111111111111', 'In Progress Workout', '2c453b67-44bb-4f13-87ec-f7d767396b31', NOW());
+
+INSERT INTO workout_participants (id, workout_id, user_id, gym_id, role, "startAt", "finishedAt", "joinedAt")
+VALUES (
+    'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    '11111111-1111-1111-1111-111111111111',
+    '2c453b67-44bb-4f13-87ec-f7d767396b31',
+    '46c163b6-ee46-41f4-a508-c6f5554871a6',
+    'owner',
+    NOW() - INTERVAL '30 minutes',   -- started 30 min ago today
+    NULL,                            -- not finished
+    NOW() - INTERVAL '30 minutes'
+);
+
+-- 4. SCHEDULED: scheduled for tomorrow
+INSERT INTO workouts (id, name, created_by, "createdAt")
+VALUES ('22222222-2222-2222-2222-222222222222', 'Scheduled Workout', '2c453b67-44bb-4f13-87ec-f7d767396b31', NOW());
+
+INSERT INTO workout_participants (id, workout_id, user_id, gym_id, role, "startAt", "finishedAt", "joinedAt")
+VALUES (
+    'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+    '22222222-2222-2222-2222-222222222222',
+    '2c453b67-44bb-4f13-87ec-f7d767396b31',
+    '46c163b6-ee46-41f4-a508-c6f5554871a6',
+    'owner',
+    NOW() + INTERVAL '1 day',        -- scheduled for tomorrow
+    NULL,
+    NOW()
+);
+```
+
 ## Testing
 
 ```bash
