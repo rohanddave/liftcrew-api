@@ -60,6 +60,7 @@ export class WorkoutsService {
     const workout = await this.workoutRepository.save({
       ...createWorkoutDto,
       createdById,
+      participantCount: 1,
     });
 
     // adding creator as participant
@@ -249,6 +250,9 @@ export class WorkoutsService {
       );
     }
 
+    // Increment participant count
+    await this.workoutRepository.increment({ id: workoutId }, 'participantCount', 1);
+
     return await this.workoutParticipantRepository.save({
       workoutId,
       userId,
@@ -285,6 +289,9 @@ export class WorkoutsService {
 
     // remove the leaving participant
     await this.workoutParticipantRepository.remove(participant);
+
+    // Decrement participant count
+    await this.workoutRepository.decrement({ id: workoutId }, 'participantCount', 1);
   }
 
   /**

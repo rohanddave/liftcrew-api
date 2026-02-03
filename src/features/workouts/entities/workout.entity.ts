@@ -32,6 +32,9 @@ export class Workout {
   @OneToMany(() => WorkoutExercise, (exercise) => exercise.workout)
   exercises: WorkoutExercise[];
 
+  @Column({ name: 'participant_count', default: 0 })
+  participantCount: number;
+
   @CreateDateColumn()
   createdAt: Date;
 }
