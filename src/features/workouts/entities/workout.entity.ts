@@ -11,14 +11,6 @@ import { User } from 'src/features/users/entities/user.entity';
 import { WorkoutParticipant } from './workout-participant.entity';
 import { WorkoutExercise } from './workout-exercise.entity';
 
-export enum WorkoutStatus {
-  IN_PROGRESS = 'in_progress',
-  SCHEDULED = 'scheduled',
-  MISSED = 'missed',
-  COMPLETED = 'completed',
-  CANCELLED = 'cancelled',
-}
-
 @Entity('workouts')
 export class Workout {
   @PrimaryGeneratedColumn('uuid')

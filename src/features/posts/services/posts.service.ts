@@ -2,8 +2,6 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
-  Inject,
-  forwardRef,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -31,7 +29,6 @@ export class PostsService {
     private readonly kudosRepository: Repository<Kudos>,
     private readonly workoutsService: WorkoutsService,
     private readonly usersService: UsersService,
-    @Inject(forwardRef(() => FeedWriteService))
     private readonly feedWriteService: FeedWriteService,
     private readonly eventEmitter: EventEmitter2,
   ) {}
@@ -39,10 +36,12 @@ export class PostsService {
   /**
    * Creates a new post from a workout participation.
    * Validates that the user is a participant in the workout before creating the post.
+   * Only allows posts for finished workouts.
    * @param userId - The UUID of the user creating the post
    * @param createPostDto - The data transfer object containing post information
    * @returns Promise<Post> The newly created post entity
    * @throws NotFoundException if workout participation doesn't exist
+   * @throws BadRequestException if workout is not finished
    */
   async create(userId: string, createPostDto: CreatePostDto): Promise<Post> {
     // Fetch and validate the workout participation
@@ -54,6 +53,13 @@ export class PostsService {
     if (!workoutParticipant) {
       throw new NotFoundException(
         `You are not a participant in workout ${createPostDto.workoutId}`,
+      );
+    }
+
+    // Validate that the workout has been finished
+    if (!workoutParticipant.finishedAt) {
+      throw new BadRequestException(
+        'Cannot create post: workout must be finished first',
       );
     }
 
@@ -218,11 +224,8 @@ export class PostsService {
     // Increment the kudos count for the post creator
     await this.usersService.incrementKudosCount(post.createdById);
 
-    // Trigger kudos fan-out to update user profile 
-    await this.feedWriteService.fanOutKudos(
-      savedKudos,
-      savedKudos.createdAt,
-    );
+    // Trigger kudos fan-out to update user profile
+    await this.feedWriteService.fanOutKudos(savedKudos, savedKudos.createdAt);
 
     // Emit event for notifications
     const kudosReceivedEvent: KudosReceivedEvent = {
@@ -232,7 +235,10 @@ export class PostsService {
       postId,
       postCreatorId: post.createdById,
     };
-    this.eventEmitter.emit(NOTIFICATION_EVENTS.KUDOS_RECEIVED, kudosReceivedEvent);
+    this.eventEmitter.emit(
+      NOTIFICATION_EVENTS.KUDOS_RECEIVED,
+      kudosReceivedEvent,
+    );
 
     return savedKudos;
   }

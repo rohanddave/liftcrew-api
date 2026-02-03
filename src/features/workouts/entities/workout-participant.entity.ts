@@ -6,6 +6,7 @@ import {
   OneToMany,
   JoinColumn,
   Unique,
+  AfterLoad,
 } from 'typeorm';
 import { User } from 'src/features/users/entities/user.entity';
 import { Workout } from './workout.entity';
@@ -18,6 +19,16 @@ export enum ParticipantRole {
   SPOTTER = 'spotter',
 }
 
+/**
+ * Status of a workout participation
+ */
+export enum WorkoutParticipationStatus {
+  SCHEDULED = 'scheduled',
+  FINISHED = 'finished',
+  MISSED = 'missed',
+  IN_PROGRESS = 'in_progress',
+}
+
 @Entity('workout_participants')
 @Unique(['workout', 'user'])
 export class WorkoutParticipant {
@@ -26,6 +37,7 @@ export class WorkoutParticipant {
 
   @ManyToOne(() => Workout, (workout) => workout.participants, {
     onDelete: 'CASCADE',
+    eager: true,
   })
   @JoinColumn({ name: 'workout_id' })
   workout: Workout;
@@ -59,6 +71,27 @@ export class WorkoutParticipant {
 
   @Column({ type: 'timestamp', nullable: true })
   finishedAt?: Date;
+
+  status: WorkoutParticipationStatus;
+
+  @AfterLoad()
+  computeStatus() {
+    const now = new Date();
+    const WORKOUT_TIMEOUT_MS = 4 * 60 * 60 * 1000; // 4 hours
+
+    if (this.startAt && this.startAt > now) {
+      this.status = WorkoutParticipationStatus.SCHEDULED;
+    } else if (this.finishedAt) {
+      this.status = WorkoutParticipationStatus.FINISHED;
+    } else if (
+      this.startAt &&
+      now.getTime() - this.startAt.getTime() > WORKOUT_TIMEOUT_MS
+    ) {
+      this.status = WorkoutParticipationStatus.MISSED;
+    } else {
+      this.status = WorkoutParticipationStatus.IN_PROGRESS;
+    }
+  }
 
   @Column({ type: 'timestamp', default: () => 'NOW()' })
   joinedAt: Date;

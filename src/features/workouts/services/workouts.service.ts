@@ -56,7 +56,7 @@ export class WorkoutsService {
   async create(
     createdById: string,
     createWorkoutDto: CreateWorkoutDto,
-  ): Promise<Workout> {
+  ): Promise<WorkoutParticipant> {
     const workout = await this.workoutRepository.save({
       ...createWorkoutDto,
       createdById,
@@ -64,14 +64,17 @@ export class WorkoutsService {
 
     // adding creator as participant
     const user = await this.usersService.findOneOrFail(createdById);
-    await this.workoutParticipantRepository.save({
+    const result = await this.workoutParticipantRepository.save({
       workoutId: workout.id,
       userId: createdById,
       role: ParticipantRole.OWNER,
       gymId: user.homeGymId,
     });
 
-    return workout;
+    return this.workoutParticipantRepository.findOne({
+      where: { id: result.id },
+      relations: { user: true, gym: true, workout: true },
+    });
   }
 
   /**
@@ -109,8 +112,13 @@ export class WorkoutsService {
   async update(
     id: string,
     updateWorkoutDto: UpdateWorkoutDto,
+    userId: string,
   ): Promise<Workout> {
     const workout = await this.findOneOrFail(id);
+
+    // Verify workout is not finished
+    await this.verifyWorkoutNotFinishedByParticipant(id, userId);
+
     Object.assign(workout, updateWorkoutDto);
     return await this.workoutRepository.save(workout);
   }
@@ -125,8 +133,12 @@ export class WorkoutsService {
   async addExercise(
     workoutId: string,
     addWorkoutExerciseDto: AddWorkoutExerciseDto,
+    userId: string,
   ): Promise<WorkoutExercise> {
     await this.findOneOrFail(workoutId);
+
+    // Verify workout is not finished
+    await this.verifyWorkoutNotFinishedByParticipant(workoutId, userId);
 
     // Check if the orderIndex is already taken
     const existingExercise = await this.workoutExerciseRepository.findOne({
@@ -171,8 +183,12 @@ export class WorkoutsService {
   async removeExerciseWithSets(
     workoutId: string,
     workoutExerciseId: string,
+    userId: string,
   ): Promise<void> {
     await this.findOneOrFail(workoutId);
+
+    // Verify workout is not finished
+    await this.verifyWorkoutNotFinishedByParticipant(workoutId, userId);
 
     const workoutExercise = await this.workoutExerciseRepository.findOne({
       where: {
@@ -206,6 +222,10 @@ export class WorkoutsService {
     addParticipantDto: AddParticipantDto,
   ): Promise<WorkoutParticipant> {
     const workout = await this.findOneOrFail(workoutId);
+
+    // Verify workout is not finished
+    await this.verifyWorkoutNotFinishedByParticipant(workoutId, userId);
+
     const user = await this.usersService.findOneOrFail(userId);
 
     const existingParticipants = await this.workoutParticipantRepository.find({
@@ -247,6 +267,10 @@ export class WorkoutsService {
    */
   async removeParticipant(workoutId: string, userId: string): Promise<void> {
     await this.findOneOrFail(workoutId);
+
+    // Verify workout is not finished
+    await this.verifyWorkoutNotFinishedByParticipant(workoutId, userId);
+
     await this.usersService.findOneOrFail(userId);
 
     const participant = await this.workoutParticipantRepository.findOne({
@@ -278,8 +302,10 @@ export class WorkoutsService {
     userId: string,
     updateParticipantDto: UpdateParticipantDto,
   ): Promise<WorkoutParticipant> {
-    await this.findOneOrFail(workoutId);
     await this.usersService.findOneOrFail(userId);
+
+    // Verify workout is not finished
+    await this.verifyWorkoutNotFinishedByParticipant(workoutId, userId);
 
     const participant = await this.workoutParticipantRepository.findOne({
       where: { workoutId, userId },
@@ -296,6 +322,114 @@ export class WorkoutsService {
 
     // Save and return the updated participant
     return await this.workoutParticipantRepository.save(participant);
+  }
+
+  /**
+   * Marks a user's workout participation as finished.
+   * Validates that at least one exercise has been tracked before allowing completion.
+   * Validates that the workout can only be finished on the same day it was scheduled.
+   * @param workoutId - The UUID of the workout
+   * @param userId - The UUID of the user finishing the workout
+   * @param finishedAt - The timestamp when the workout was finished (cannot be in the future)
+   * @returns Promise<WorkoutParticipant> The updated participant entity with finishedAt set
+   * @throws NotFoundException if workout or participant doesn't exist
+   * @throws BadRequestException if no exercises tracked, finishedAt is in the future, or not on the scheduled day
+   */
+  async finishWorkout(
+    workoutId: string,
+    userId: string,
+    finishedAt: Date,
+  ): Promise<WorkoutParticipant> {
+    // Verify workout exists
+    await this.findOneOrFail(workoutId);
+
+    // Get the participant
+    const participant = await this.workoutParticipantRepository.findOne({
+      where: { workoutId, userId },
+    });
+
+    if (!participant) {
+      throw new NotFoundException(
+        `You are not a participant in workout ${workoutId}`,
+      );
+    }
+
+    // Validate that finishedAt is not in the future
+    const now = new Date();
+    if (finishedAt > now) {
+      throw new BadRequestException(
+        'Cannot finish workout: finishedAt cannot be in the future',
+      );
+    }
+
+    // Validate that startAt is on the same day as current time
+    const startAtDate = new Date(participant.startAt);
+    const isSameDay =
+      startAtDate.getFullYear() === now.getFullYear() &&
+      startAtDate.getMonth() === now.getMonth() &&
+      startAtDate.getDate() === now.getDate();
+
+    if (!isSameDay) {
+      throw new BadRequestException(
+        'Cannot finish workout: workout can only be finished on the day it was scheduled',
+      );
+    }
+
+    // Check if at least one exercise has been tracked for this workout
+    const exerciseCount = await this.workoutExerciseRepository.count({
+      where: { workoutId },
+    });
+
+    if (exerciseCount === 0) {
+      throw new BadRequestException(
+        'Cannot finish workout: at least one exercise must be tracked',
+      );
+    }
+
+    // Update the finishedAt timestamp
+    participant.finishedAt = finishedAt;
+
+    // Save and return the updated participant
+    return await this.workoutParticipantRepository.save(participant);
+  }
+
+  /**
+   * Checks if a workout has been finished by any participant.
+   * @param workoutId - The UUID of the workout
+   * @returns Promise<boolean> True if any participant has finished, false otherwise
+   */
+  private async isWorkoutFinished(
+    workoutId: string,
+    userId: string,
+  ): Promise<boolean> {
+    const finishedParticipant = await this.workoutParticipantRepository.findOne(
+      {
+        where: {
+          workoutId,
+          userId,
+        },
+      },
+    );
+
+    return !!finishedParticipant?.finishedAt;
+  }
+
+  /**
+   * Verifies that a workout is not finished.
+   * Throws a BadRequestException if any participant has finished the workout.
+   * @param workoutId - The UUID of the workout
+   * @throws BadRequestException if workout is finished
+   */
+  private async verifyWorkoutNotFinishedByParticipant(
+    workoutId: string,
+    participantId: string,
+  ): Promise<void> {
+    const isFinished = await this.isWorkoutFinished(workoutId, participantId);
+    if (isFinished) {
+      throw new BadRequestException(
+        'Cannot modify workout: workout has already been finished',
+      );
+    }
   }
 
   /**
@@ -368,6 +502,12 @@ export class WorkoutsService {
   ): Promise<ExerciseSet> {
     await this.findOneOrFail(workoutId);
 
+    // Verify workout is not finished
+    await this.verifyWorkoutNotFinishedByParticipant(
+      workoutId,
+      addSetDto.participantId,
+    );
+
     const workoutExercise = await this.workoutExerciseRepository.findOne({
       where: {
         id: workoutExerciseId,
@@ -430,8 +570,12 @@ export class WorkoutsService {
     workoutId: string,
     workoutExerciseId: string,
     setId: string,
+    userId: string,
   ): Promise<void> {
     await this.findOneOrFail(workoutId);
+
+    // Verify workout is not finished
+    await this.verifyWorkoutNotFinishedByParticipant(workoutId, userId);
 
     const workoutExercise = await this.workoutExerciseRepository.findOne({
       where: {
@@ -465,14 +609,15 @@ export class WorkoutsService {
   /**
    * Retrieves workouts for a user with optional date range filtering.
    * If no query parameters provided, returns all workouts.
+   * Each workout includes a computed status field based on startAt and finishedAt.
    * @param userId - The UUID of the user
    * @param query - Optional query parameters for date filtering
-   * @returns Promise<Workout[]> Array of workout entities
+   * @returns Promise<WorkoutWithStatus[]> Array of workout entities with status
    */
   async findAllForUser(
     userId: string,
     query?: WorkoutQueryDto,
-  ): Promise<Workout[]> {
+  ): Promise<WorkoutParticipant[]> {
     // Build where clause
     const whereClause: FindOptionsWhere<WorkoutParticipant> = {
       userId: Equal(userId),
@@ -503,8 +648,42 @@ export class WorkoutsService {
       order: { startAt: 'ASC' },
     });
 
-    return participations.map((p) => p.workout);
+    return participations;
+
+    // return participations.map((p) => {
+    //   const status = this.computeWorkoutStatus(p.startAt, p.finishedAt, now);
+    //   return {
+    //     ...p.workout,
+    //     status,
+    //   };
+    // });
   }
+
+  /**
+   * Computes the status of a workout based on startAt and finishedAt timestamps
+   * @param startAt - When the workout was scheduled to start
+   * @param finishedAt - When the workout was finished (nullable)
+   * @param now - Current timestamp for comparison
+   * @returns WorkoutParticipationStatus
+   */
+  // private computeWorkoutStatus(
+  //   startAt: Date,
+  //   finishedAt: Date | null,
+  //   now: Date,
+  // ): WorkoutParticipationStatus {
+  //   // If startAt is in the future, it's scheduled
+  //   if (startAt > now) {
+  //     return WorkoutParticipationStatus.SCHEDULED;
+  //   }
+
+  //   // If startAt has passed and finishedAt is set, it's finished
+  //   if (finishedAt) {
+  //     return WorkoutParticipationStatus.FINISHED;
+  //   }
+
+  //   // If startAt has passed and finishedAt is not set, it's missed
+  //   return WorkoutParticipationStatus.MISSED;
+  // }
 
   /**
    * Deletes a workout and all associated data.

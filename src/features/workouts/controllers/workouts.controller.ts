@@ -19,6 +19,7 @@ import { AddParticipantDto } from '../dto/add-participant.dto';
 import { UpdateParticipantDto } from '../dto/update-participant.dto';
 import { AddSetDto } from '../dto/add-set.dto';
 import { WorkoutQueryDto } from '../dto/workout-query.dto';
+import { FinishWorkoutDto } from '../dto/finish-workout.dto';
 import { RequestWithUser } from 'src/common/types/request.type';
 
 /**
@@ -43,9 +44,14 @@ export class WorkoutsController {
    * GET /workouts?startDate=2025-12-01T00:00:00Z&endDate=2025-12-31T23:59:59Z - Returns workouts in December
    */
   @Get()
-  findAll(@Req() request: RequestWithUser, @Query() query: WorkoutQueryDto) {
+  async findAll(
+    @Req() request: RequestWithUser,
+    @Query() query: WorkoutQueryDto,
+  ) {
     const { user } = request;
-    return this.workoutsService.findAllForUser(user.id, query);
+    const response = await this.workoutsService.findAllForUser(user.id, query);
+    console.log('printing workout participations for user: ', response);
+    return response;
   }
 
   /**
@@ -81,8 +87,13 @@ export class WorkoutsController {
    * @throws NotFoundException if workout with given ID is not found
    */
   @Put(':id')
-  update(@Param('id') id: string, @Body() updateWorkoutDto: UpdateWorkoutDto) {
-    return this.workoutsService.update(id, updateWorkoutDto);
+  update(
+    @Param('id') id: string,
+    @Body() updateWorkoutDto: UpdateWorkoutDto,
+    @Req() request: RequestWithUser,
+  ) {
+    const { user } = request;
+    return this.workoutsService.update(id, updateWorkoutDto, user.id);
   }
 
   /**
@@ -126,12 +137,17 @@ export class WorkoutsController {
    * @returns Promise<WorkoutParticipant | null> The participant record with user and gym relations, or null if not participating
    */
   @Get(':id/participants/me')
-  getMyParticipation(
+  async getMyParticipation(
     @Req() request: RequestWithUser,
     @Param('id') workoutId: string,
   ) {
     const { user } = request;
-    return this.workoutsService.getMyParticipation(workoutId, user.id);
+    const result = await this.workoutsService.getMyParticipation(
+      workoutId,
+      user.id,
+    );
+    console.log('printing my participation: ', result);
+    return result;
   }
 
   /**
@@ -159,7 +175,7 @@ export class WorkoutsController {
 
   /**
    * Updates a participant's information in a workout.
-   * Can update startAt, finishedAt, role, and gymId.
+   * Can update , finishedAt, role, and gymId.
    * @param request - Request with authenticated user
    * @param workoutId - The UUID of the workout
    * @param updateParticipantDto - The data transfer object containing updated participant information
@@ -179,6 +195,29 @@ export class WorkoutsController {
       user.id,
       updateParticipantDto,
     );
+  }
+
+  /**
+   * Marks the authenticated user's workout participation as finished.
+   * Validates that at least one exercise has been tracked before allowing completion.
+   * @param request - Request with authenticated user
+   * @param workoutId - The UUID of the workout
+   * @param finishWorkoutDto - Optional DTO with finishedAt timestamp (defaults to now)
+   * @returns Promise<WorkoutParticipant> The updated participant entity with finishedAt set
+   * @throws NotFoundException if workout or participant doesn't exist
+   * @throws BadRequestException if no exercises have been tracked
+   */
+  @Post(':id/finish')
+  finishWorkout(
+    @Req() request: RequestWithUser,
+    @Param('id') workoutId: string,
+    @Body() finishWorkoutDto: FinishWorkoutDto,
+  ) {
+    const { user } = request;
+    const finishedAt = finishWorkoutDto.finishedAt
+      ? new Date(finishWorkoutDto.finishedAt)
+      : new Date();
+    return this.workoutsService.finishWorkout(workoutId, user.id, finishedAt);
   }
 
   /**
@@ -211,10 +250,16 @@ export class WorkoutsController {
    */
   @Post(':id/exercises')
   addExercise(
+    @Req() request: RequestWithUser,
     @Param('id') workoutId: string,
     @Body() addWorkoutExerciseDto: AddWorkoutExerciseDto,
   ) {
-    return this.workoutsService.addExercise(workoutId, addWorkoutExerciseDto);
+    const { user } = request;
+    return this.workoutsService.addExercise(
+      workoutId,
+      addWorkoutExerciseDto,
+      user.id,
+    );
   }
 
   /**
@@ -227,10 +272,16 @@ export class WorkoutsController {
   @Delete(':id/exercises/:exerciseId')
   @HttpCode(HttpStatus.NO_CONTENT)
   removeExercise(
+    @Req() request: RequestWithUser,
     @Param('id') workoutId: string,
     @Param('exerciseId') exerciseId: string,
   ) {
-    return this.workoutsService.removeExerciseWithSets(workoutId, exerciseId);
+    const { user } = request;
+    return this.workoutsService.removeExerciseWithSets(
+      workoutId,
+      exerciseId,
+      user.id,
+    );
   }
 
   // ==================== Set Management ====================
@@ -264,10 +315,17 @@ export class WorkoutsController {
   @Delete(':id/exercises/:exerciseId/sets/:setId')
   @HttpCode(HttpStatus.NO_CONTENT)
   removeSet(
+    @Req() request: RequestWithUser,
     @Param('id') workoutId: string,
     @Param('exerciseId') exerciseId: string,
     @Param('setId') setId: string,
   ) {
-    return this.workoutsService.removeSet(workoutId, exerciseId, setId);
+    const { user } = request;
+    return this.workoutsService.removeSet(
+      workoutId,
+      exerciseId,
+      setId,
+      user.id,
+    );
   }
 }

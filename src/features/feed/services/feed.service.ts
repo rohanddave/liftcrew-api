@@ -98,8 +98,6 @@ export class FeedService {
         ? feedItems[feedItems.length - 1].activityAt.toISOString()
         : null;
 
-    console.log('Hydrated Feed Items:', JSON.stringify(hydratedItems));
-
     return {
       items: hydratedItems,
       nextCursor,

@@ -1,10 +1,4 @@
-import {
-  IsEnum,
-  IsISO8601,
-  IsOptional,
-  IsString,
-} from 'class-validator';
-import { WorkoutStatus } from '../entities/workout.entity';
+import { IsEnum, IsISO8601, IsOptional, IsString } from 'class-validator';
 
 /**
  * Data Transfer Object for updating an existing workout.
@@ -34,12 +28,4 @@ export class UpdateWorkoutDto {
   @IsOptional()
   @IsISO8601()
   endedAt?: string;
-
-  /**
-   * Status of the workout.
-   * @example "completed"
-   */
-  @IsOptional()
-  @IsEnum(WorkoutStatus)
-  status?: WorkoutStatus;
 }
