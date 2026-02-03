@@ -10,6 +10,8 @@ import { UsersModule } from '../users/users.module';
 
 export interface SocialModuleOptions {
   type: 'graph' | 'relational';
+  /** Set to true to register the controller (only do this once in app.module) */
+  withController?: boolean;
 }
 
 @Module({})
@@ -18,11 +20,11 @@ export class SocialModule {
     return {
       module: SocialModule,
       imports: [...this.getImports(options)],
-      controllers: [FollowsController],
+      controllers: options.withController ? [FollowsController] : [],
       providers: [
         SocialService,
         {
-          provide: 'FollowsRepository',
+          provide: 'FOLLOWS_REPOSITORY',
           useClass:
             options.type === 'graph'
               ? GraphFollowsRepository
@@ -40,7 +42,6 @@ export class SocialModule {
     if (options.type === 'graph') {
       imports.push(Neo4jModule);
     } else if (options.type === 'relational') {
-      // TODO: create entity for relational social features and add here
       imports.push(TypeOrmModule.forFeature([Follows]));
     }
     return imports;

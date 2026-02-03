@@ -9,14 +9,15 @@ import { FollowsRepository } from '../repositories/follows-repository.interface'
 import { FollowStatus } from '../types';
 import {
   NOTIFICATION_EVENTS,
-  NewFollowerEvent,
+  FollowRequestEvent,
+  FollowAcceptedEvent,
 } from '../../notifications/interfaces/events.interface';
 import { NotificationType } from '../../notifications/types';
 
 @Injectable()
 export class SocialService {
   constructor(
-    @Inject('FollowsRepository')
+    @Inject('FOLLOWS_REPOSITORY')
     private readonly followsRepository: FollowsRepository,
     private readonly eventEmitter: EventEmitter2,
   ) {}
@@ -49,6 +50,18 @@ export class SocialService {
     }
 
     await this.followsRepository.create(followerId, followeeId);
+
+    // Emit event for follow request notification
+    const followRequestEvent: FollowRequestEvent = {
+      actorId: followerId,
+      type: NotificationType.FOLLOW_REQUEST,
+      followerId,
+      followeeId,
+    };
+    this.eventEmitter.emit(
+      NOTIFICATION_EVENTS.FOLLOW_REQUEST,
+      followRequestEvent,
+    );
   }
 
   /**
@@ -77,14 +90,17 @@ export class SocialService {
 
     await this.followsRepository.acceptFollowRequest(followerId, followeeId);
 
-    // Emit event for notifications
-    const newFollowerEvent: NewFollowerEvent = {
-      actorId: followerId,
-      type: NotificationType.NEW_FOLLOWER,
+    // Emit event for follow accepted notification (notify the follower that their request was accepted)
+    const followAcceptedEvent: FollowAcceptedEvent = {
+      actorId: followeeId,
+      type: NotificationType.FOLLOW_ACCEPTED,
       followerId,
       followeeId,
     };
-    this.eventEmitter.emit(NOTIFICATION_EVENTS.NEW_FOLLOWER, newFollowerEvent);
+    this.eventEmitter.emit(
+      NOTIFICATION_EVENTS.FOLLOW_ACCEPTED,
+      followAcceptedEvent,
+    );
   }
 
   /**

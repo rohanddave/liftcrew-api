@@ -8,7 +8,8 @@ import { ConfigService } from '@nestjs/config';
 import {
   PostCreatedEvent,
   KudosReceivedEvent,
-  NewFollowerEvent,
+  FollowRequestEvent,
+  FollowAcceptedEvent,
   GymCheckInEvent,
   NOTIFICATION_EVENTS,
 } from '../interfaces/events.interface';
@@ -259,26 +260,27 @@ export class NotificationsService {
   }
 
   /**
-   * Event listener: New follower
-   * Notifies the followed user
+   * Event listener: Follow request received
+   * Notifies the user who received the follow request
    */
-  @OnEvent(NOTIFICATION_EVENTS.NEW_FOLLOWER)
-  async handleNewFollower(event: NewFollowerEvent): Promise<void> {
+  @OnEvent(NOTIFICATION_EVENTS.FOLLOW_REQUEST)
+  async handleFollowRequest(event: FollowRequestEvent): Promise<void> {
     this.logger.log(
-      `Handling new follower event: ${event.followerId} followed ${event.followeeId}`,
+      `Handling follow request event: ${event.followerId} sent request to ${event.followeeId}`,
     );
 
     try {
       const jobData: SendNotificationJobData = {
         userId: event.followeeId,
-        type: NotificationType.NEW_FOLLOWER,
+        type: NotificationType.FOLLOW_REQUEST,
         entityId: event.followerId,
         entityType: 'follow',
         actorId: event.followerId,
         payload: {
-          title: 'New Follower',
-          body: 'Someone started following you',
+          title: 'Follow Request',
+          body: 'Someone wants to follow you',
           data: {
+            type: NotificationType.FOLLOW_REQUEST,
             followerId: event.followerId,
             followeeId: event.followeeId,
           },
@@ -288,10 +290,48 @@ export class NotificationsService {
       await this.notificationsQueue.add('send-notification', jobData);
 
       this.logger.log(
-        `Enqueued new follower notification for user ${event.followeeId}`,
+        `Enqueued follow request notification for user ${event.followeeId}`,
       );
     } catch (error) {
-      this.logger.error('Failed to handle new follower event:', error);
+      this.logger.error('Failed to handle follow request event:', error);
+    }
+  }
+
+  /**
+   * Event listener: Follow request accepted
+   * Notifies the user whose follow request was accepted
+   */
+  @OnEvent(NOTIFICATION_EVENTS.FOLLOW_ACCEPTED)
+  async handleFollowAccepted(event: FollowAcceptedEvent): Promise<void> {
+    this.logger.log(
+      `Handling follow accepted event: ${event.followeeId} accepted ${event.followerId}'s request`,
+    );
+
+    try {
+      const jobData: SendNotificationJobData = {
+        userId: event.followerId,
+        type: NotificationType.FOLLOW_ACCEPTED,
+        entityId: event.followeeId,
+        entityType: 'follow',
+        actorId: event.followeeId,
+        payload: {
+          title: 'Follow Request Accepted',
+          body: 'Your follow request was accepted',
+          data: {
+            type: NotificationType.FOLLOW_ACCEPTED,
+            followerId: event.followerId,
+            followeeId: event.followeeId,
+          },
+        },
+      };
+
+      await this.notificationsQueue.add('send-notification', jobData);
+
+      this.logger.log(
+        `Enqueued follow accepted notification for user ${event.followerId}`,
+      );
+    } catch (error) {
+      this.logger.error('Failed to handle follow accepted event:', error);
     }
   }
 

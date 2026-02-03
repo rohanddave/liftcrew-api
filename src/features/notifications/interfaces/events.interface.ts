@@ -28,12 +28,12 @@ export interface KudosReceivedEvent extends NotificationEvent {
 }
 
 /**
- * Event emitted when a user starts following another user
+ * Event emitted when a follow request is received
  */
-export interface NewFollowerEvent extends NotificationEvent {
-  type: NotificationType.NEW_FOLLOWER;
-  followerId: string; // User who followed
-  followeeId: string; // User being followed
+export interface FollowRequestEvent extends NotificationEvent {
+  type: NotificationType.FOLLOW_REQUEST;
+  followerId: string; // User who sent the request
+  followeeId: string; // User receiving the request
 }
 
 /**
@@ -41,8 +41,8 @@ export interface NewFollowerEvent extends NotificationEvent {
  */
 export interface FollowAcceptedEvent extends NotificationEvent {
   type: NotificationType.FOLLOW_ACCEPTED;
-  followerId: string;
-  followeeId: string;
+  followerId: string; // User who sent the original request
+  followeeId: string; // User who accepted the request
 }
 
 /**
@@ -60,7 +60,7 @@ export interface GymCheckInEvent extends NotificationEvent {
 export type AnyNotificationEvent =
   | PostCreatedEvent
   | KudosReceivedEvent
-  | NewFollowerEvent
+  | FollowRequestEvent
   | FollowAcceptedEvent
   | GymCheckInEvent;
 
@@ -70,7 +70,7 @@ export type AnyNotificationEvent =
 export const NOTIFICATION_EVENTS = {
   POST_CREATED: 'notification.post.created',
   KUDOS_RECEIVED: 'notification.kudos.received',
-  NEW_FOLLOWER: 'notification.follower.new',
+  FOLLOW_REQUEST: 'notification.follower.request',
   FOLLOW_ACCEPTED: 'notification.follower.accepted',
   GYM_CHECK_IN: 'notification.gym.checkin',
 } as const;

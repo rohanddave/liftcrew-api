@@ -50,7 +50,7 @@ import { NotificationsModule } from './features/notifications/notifications.modu
     AuthModule,
     UsersModule,
     GymsModule,
-    SocialModule.register({ type: 'graph' }),
+    SocialModule.register({ type: 'relational', withController: true }),
     WorkoutsModule,
     PostsModule,
     QueueModule,
