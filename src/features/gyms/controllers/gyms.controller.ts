@@ -100,4 +100,33 @@ export class GymsController {
     console.log('Check-in result:', result);
     return result;
   }
+
+  /**
+   * Check out from a gym.
+   * @param req - The request object containing the authenticated user
+   * @param gymId - The UUID of the gym to check out from
+   * @returns Promise<{ success: boolean; message: string }>
+   * @throws NotFoundException if gym doesn't exist
+   * @throws BadRequestException if user is not checked in at this gym
+   */
+  @Post(':id/check-out')
+  async checkOut(@Req() req: RequestWithUser, @Param('id') gymId: string) {
+    return this.gymsService.checkOut(gymId, req.user.id);
+  }
+
+  /**
+   * Get active followers at a specific gym.
+   * Returns users who the requesting user follows AND who are currently checked in.
+   * @param req - The request object containing the authenticated user
+   * @param gymId - The UUID of the gym
+   * @returns Promise<ActiveFollower[]>
+   * @throws NotFoundException if gym doesn't exist
+   */
+  @Get(':id/followers-active')
+  async getActiveFollowers(
+    @Req() req: RequestWithUser,
+    @Param('id') gymId: string,
+  ) {
+    return this.gymsService.getActiveFollowers(gymId, req.user.id);
+  }
 }

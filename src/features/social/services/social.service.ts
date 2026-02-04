@@ -4,7 +4,7 @@ import {
   BadRequestException,
   Inject,
 } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { FollowsRepository } from '../repositories/follows-repository.interface';
 import { FollowStatus } from '../types';
 import {

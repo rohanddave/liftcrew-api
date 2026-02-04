@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { User } from '../entities/user.entity';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
-import { GymsService } from 'src/features/gyms/services/gyms.service';
+import { Gym } from 'src/features/gyms/entities/gym.entity';
 
 /**
  * Service responsible for managing user business logic and database operations.
@@ -15,7 +15,8 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-    private readonly gymsService: GymsService,
+    @InjectRepository(Gym)
+    private readonly gymsRepository: Repository<Gym>,
   ) {}
 
   /**
@@ -79,7 +80,7 @@ export class UsersService {
    * @returns Promise<User> The newly created and saved user entity with computed age property
    */
   async create(createUserDto: CreateUserDto, email: string): Promise<User> {
-    await this.gymsService.findOneOrFail(createUserDto.homeGymId);
+    await this.gymsRepository.findOneByOrFail({ id: createUserDto.homeGymId });
 
     // Create a new user entity from the DTO
     const user = this.userRepository.create({
@@ -108,7 +109,9 @@ export class UsersService {
 
     // Validate that the gym exists if homeGymId is being updated
     if (updateUserDto.homeGymId) {
-      await this.gymsService.findOneOrFail(updateUserDto.homeGymId);
+      await this.gymsRepository.findOneByOrFail({
+        id: updateUserDto.homeGymId,
+      });
     }
 
     // Merge the updates into the existing user entity

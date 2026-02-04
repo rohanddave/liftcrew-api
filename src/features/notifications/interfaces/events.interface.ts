@@ -1,4 +1,5 @@
 import { NotificationType } from '../types';
+import { FollowStatus } from 'src/features/social/types';
 
 /**
  * Base event interface for all notification events
@@ -6,6 +7,33 @@ import { NotificationType } from '../types';
 export interface NotificationEvent {
   actorId: string; // User who performed the action
   type: NotificationType;
+}
+
+/**
+ * Event for requesting a user's following list
+ */
+export interface GetFollowingRequest {
+  userId: string;
+  page: number;
+  limit: number;
+  status?: FollowStatus;
+}
+
+/**
+ * Response from GetFollowing request
+ */
+export interface FollowerData {
+  userId: string;
+  username: string;
+  name: string;
+  imageUrl?: string;
+  status: FollowStatus;
+  since: Date;
+}
+
+export interface GetFollowingResponse {
+  data: FollowerData[];
+  total: number;
 }
 
 /**

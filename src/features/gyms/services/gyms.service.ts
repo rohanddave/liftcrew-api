@@ -15,6 +15,10 @@ import {
   GymCheckInEvent,
 } from 'src/features/notifications/interfaces/events.interface';
 import { NotificationType } from 'src/features/notifications/types';
+import { GymPresenceService } from './gym-presence.service';
+import { FollowStatus } from 'src/features/social/types';
+import { ActiveFollower } from '../types';
+import { SocialService } from 'src/features/social/services/social.service';
 
 /**
  * Service responsible for managing gym business logic and database operations.
@@ -29,6 +33,8 @@ export class GymsService {
     private readonly gymRepository: Repository<Gym>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private readonly presenceService: GymPresenceService,
+    private readonly socialService: SocialService,
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
@@ -154,11 +160,140 @@ export class GymsService {
     };
     this.eventEmitter.emit(NOTIFICATION_EVENTS.GYM_CHECK_IN, gymCheckInEvent);
 
+    // Track presence in Redis
+    await this.presenceService.checkIn(homeGym.id, userId, {
+      username: user.username,
+    });
+
     return {
       success: true,
       message: `Successfully checked in at ${homeGym.name}`,
       gym: homeGym,
     };
+  }
+
+  /**
+   * Check out a user from a gym.
+   * @param gymId - The UUID of the gym to check out from
+   * @param userId - The UUID of the user checking out
+   * @returns Promise<{ success: boolean; message: string }>
+   * @throws NotFoundException if gym doesn't exist
+   * @throws BadRequestException if user is not checked in at this gym
+   */
+  async checkOut(
+    gymId: string,
+    userId: string,
+  ): Promise<{ success: boolean; message: string }> {
+    // Validate gym exists
+    const gym = await this.gymRepository.findOne({
+      where: { id: gymId },
+    });
+
+    if (!gym) {
+      throw new NotFoundException(`Gym with ID ${gymId} not found`);
+    }
+
+    // Check if user is checked in
+    const isCheckedIn = await this.presenceService.isUserCheckedIn(
+      gymId,
+      userId,
+    );
+
+    if (!isCheckedIn) {
+      throw new BadRequestException('You are not checked in at this gym');
+    }
+
+    // Remove from presence tracking
+    await this.presenceService.checkOut(gymId, userId);
+
+    return {
+      success: true,
+      message: `Successfully checked out from ${gym.name}`,
+    };
+  }
+
+  /**
+   * Get active followers at a specific gym.
+   * Returns users who the requesting user follows AND who are currently checked in.
+   * @param gymId - The UUID of the gym
+   * @param userId - The UUID of the requesting user
+   * @returns Promise<ActiveFollower[]>
+   * @throws NotFoundException if gym doesn't exist
+   */
+  async getActiveFollowers(
+    gymId: string,
+    userId: string,
+  ): Promise<ActiveFollower[]> {
+    // Validate gym exists
+    const gym = await this.gymRepository.findOne({
+      where: { id: gymId },
+    });
+
+    if (!gym) {
+      throw new NotFoundException(`Gym with ID ${gymId} not found`);
+    }
+
+    // Get active user IDs from Redis
+    const activeUserIds = await this.presenceService.getActiveUsers(gymId);
+
+    console.log('Active user IDs at gym:', activeUserIds);
+
+    if (activeUserIds.length === 0) {
+      return [];
+    }
+
+    // Get user's following list (accepted only)
+    const followingResult = await this.socialService.getFollowing(
+      userId,
+      1,
+      1000,
+      FollowStatus.ACCEPTED,
+    );
+
+    console.log('User is following:', followingResult.data);
+
+    if (followingResult.data.length === 0) {
+      return [];
+    }
+
+    // Create a map for quick lookup of following user details
+    const followingMap = new Map(
+      followingResult.data.map((f) => [f.userId, f]),
+    );
+
+    // Compute intersection
+    const activeFollowers = activeUserIds.filter((user) =>
+      followingMap.has(user.userId),
+    );
+
+    console.log('Active followers at gym:', activeFollowers);
+
+    return activeFollowers as unknown as ActiveFollower[];
+    // Get timestamps for active followers
+    // const timestamps = await this.presenceService.getCheckinTimestamps(
+    //   gymId,
+    //   activeFollowerIds,
+    // );
+
+    // Build responsed
+    // const activeFollowers: ActiveFollower[] = activeFollowerIds.map((id) => {
+    //   const following = followingMap.get(id);
+    //   // const checkedInAt = timestamps.get(id) || now;
+
+    //   return {
+    //     userId: id,
+    //     username: following.username,
+    //     // name: following.name,
+    //     imageUrl: following.imageUrl,
+    //     // checkedInAt,
+    //     // checkedInAgo: this.formatTimeAgo(now - checkedInAt),
+    //   };
+    // });
+
+    // // Sort by check-in time (most recent first)
+    // // activeFollowers.sort((a, b) => b.checkedInAt - a.checkedInAt);
+
+    // return activeFollowers;
   }
 
   /**

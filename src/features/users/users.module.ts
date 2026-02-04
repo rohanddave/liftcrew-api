@@ -6,6 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { GymsModule } from '../gyms/gyms.module';
 import { FirebaseModule } from 'src/infra/firebase/firebase.module';
+import { Gym } from '../gyms/entities/gym.entity';
 
 /**
  * Users Module
@@ -20,7 +21,7 @@ import { FirebaseModule } from 'src/infra/firebase/firebase.module';
  * - UsersService: For use in other modules that need user data access (e.g., AuthModule)
  */
 @Module({
-  imports: [FirebaseModule, TypeOrmModule.forFeature([User]), GymsModule],
+  imports: [FirebaseModule, TypeOrmModule.forFeature([User, Gym])],
   controllers: [UsersController],
   providers: [UsersService, UsersSearchService],
   exports: [UsersService],

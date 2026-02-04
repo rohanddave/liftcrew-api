@@ -34,6 +34,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
     FirebaseModule,
     TypeOrmModule.forFeature([RefreshToken]),
     UsersModule,
+    // TODO: remove this depdenency and use event emitter to remove tokens on logout
     NotificationsModule,
   ],
   controllers: [AuthController],
