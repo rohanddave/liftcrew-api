@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -9,7 +10,6 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Gym } from '../entities/gym.entity';
 import { CreateGymDto } from '../dto/create-gym.dto';
 import { UpdateGymDto } from '../dto/update-gym.dto';
-import { User } from 'src/features/users/entities/user.entity';
 import {
   NOTIFICATION_EVENTS,
   GymCheckInEvent,
@@ -19,6 +19,12 @@ import { GymPresenceService } from './gym-presence.service';
 import { FollowStatus } from 'src/features/social/types';
 import { ActiveFollower } from '../types';
 import { SocialService } from 'src/features/social/services/social.service';
+import {
+  paginate,
+  PaginatedResult,
+  PaginationDto,
+} from 'src/common/pagination';
+import { UsersService } from 'src/features/users/services/users.service';
 
 /**
  * Service responsible for managing gym business logic and database operations.
@@ -31,8 +37,7 @@ export class GymsService {
   constructor(
     @InjectRepository(Gym)
     private readonly gymRepository: Repository<Gym>,
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+    private readonly usersService: UsersService,
     private readonly presenceService: GymPresenceService,
     private readonly socialService: SocialService,
     private readonly eventEmitter: EventEmitter2,
@@ -42,8 +47,8 @@ export class GymsService {
    * Retrieves all gyms from the database.
    * @returns Promise<Gym[]> Array of all gym entities
    */
-  async findAll(): Promise<Gym[]> {
-    return await this.gymRepository.find();
+  async findAll(paginationDto: PaginationDto): Promise<PaginatedResult<Gym>> {
+    return paginate<Gym>(this.gymRepository, paginationDto);
   }
 
   /**
@@ -54,8 +59,12 @@ export class GymsService {
    * @throws NotFoundException if no gym exists with the given ID
    */
   async findOneOrFail(id: string): Promise<Gym> {
-    const gym = await this.gymRepository.findOneByOrFail({ id });
-    return gym;
+    try {
+      const gym = await this.gymRepository.findOneByOrFail({ id });
+      return gym;
+    } catch (error) {
+      throw new NotFoundException(`Gym with ID ${id} not found`);
+    }
   }
 
   /**
@@ -65,8 +74,7 @@ export class GymsService {
    * @returns Promise<Gym | null> The gym entity if found, null otherwise
    */
   async findOne(id: string): Promise<Gym | null> {
-    const gym = await this.gymRepository.findOneByOrFail({ id });
-    return gym;
+    return this.gymRepository.findOneBy({ id });
   }
 
   /**
@@ -77,8 +85,9 @@ export class GymsService {
   async create(createGymDto: CreateGymDto): Promise<Gym> {
     // Create a new gym entity from the DTO
     const gym = this.gymRepository.create(createGymDto);
+
     // Persist the gym to the database
-    return await this.gymRepository.save(gym);
+    return this.gymRepository.save(gym);
   }
 
   /**
@@ -91,10 +100,12 @@ export class GymsService {
   async update(id: string, updateGymDto: UpdateGymDto): Promise<Gym> {
     // First, verify the gym exists (throws NotFoundException if not found)
     const gym = await this.findOneOrFail(id);
+
     // Merge the updates into the existing gym entity
     Object.assign(gym, updateGymDto);
+
     // Save and return the updated gym
-    return await this.gymRepository.save(gym);
+    return this.gymRepository.save(gym);
   }
 
   /**
@@ -106,6 +117,7 @@ export class GymsService {
   async remove(id: string): Promise<void> {
     // First, verify the gym exists (throws NotFoundException if not found)
     const gym = await this.findOneOrFail(id);
+
     // Remove the gym from the database
     await this.gymRepository.remove(gym);
   }
@@ -126,21 +138,13 @@ export class GymsService {
     lng: number,
   ): Promise<{ success: boolean; message: string; gym?: Gym }> {
     // Get the user with their home gym
-    const user = await this.userRepository.findOne({
-      where: { id: userId },
-    });
+    const user = await this.usersService.findOneWithHomeGym(userId);
 
-    if (!user) {
-      throw new NotFoundException(`User with ID ${userId} not found`);
-    }
-
-    if (!user.homeGymId) {
+    if (!user.homeGym) {
       throw new BadRequestException('You have not set a home gym');
     }
 
-    const homeGym = await this.gymRepository.findOne({
-      where: { id: user.homeGymId },
-    });
+    const homeGym = user.homeGym;
 
     // Calculate distance between user's location and home gym
     const distance = this.calculateDistance(lat, lng, homeGym.lat, homeGym.lng);
@@ -151,19 +155,23 @@ export class GymsService {
       );
     }
 
+    // Track presence first - if this fails, don't emit the event
+    try {
+      await this.presenceService.checkIn(homeGym.id, userId, {
+        username: user.username,
+      });
+    } catch (error) {
+      console.error('Error during gym check-in presence tracking:', error);
+      throw new InternalServerErrorException('Failed to record check-in');
+    }
+
     // Emit check-in event for notifications
-    const gymCheckInEvent: GymCheckInEvent = {
+    this.eventEmitter.emit(NOTIFICATION_EVENTS.GYM_CHECK_IN, {
       actorId: userId,
       type: NotificationType.GYM_CHECK_IN,
       gymId: homeGym.id,
       gymName: homeGym.name,
-    };
-    this.eventEmitter.emit(NOTIFICATION_EVENTS.GYM_CHECK_IN, gymCheckInEvent);
-
-    // Track presence in Redis
-    await this.presenceService.checkIn(homeGym.id, userId, {
-      username: user.username,
-    });
+    } satisfies GymCheckInEvent);
 
     return {
       success: true,
@@ -185,26 +193,21 @@ export class GymsService {
     userId: string,
   ): Promise<{ success: boolean; message: string }> {
     // Validate gym exists
-    const gym = await this.gymRepository.findOne({
-      where: { id: gymId },
-    });
-
-    if (!gym) {
-      throw new NotFoundException(`Gym with ID ${gymId} not found`);
-    }
-
-    // Check if user is checked in
-    const isCheckedIn = await this.presenceService.isUserCheckedIn(
-      gymId,
-      userId,
-    );
+    const [gym, isCheckedIn] = await Promise.all([
+      this.findOneOrFail(gymId),
+      this.presenceService.isUserCheckedIn(gymId, userId),
+    ]);
 
     if (!isCheckedIn) {
       throw new BadRequestException('You are not checked in at this gym');
     }
 
     // Remove from presence tracking
-    await this.presenceService.checkOut(gymId, userId);
+    try {
+      await this.presenceService.checkOut(gymId, userId);
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to check out');
+    }
 
     return {
       success: true,
@@ -220,23 +223,16 @@ export class GymsService {
    * @returns Promise<ActiveFollower[]>
    * @throws NotFoundException if gym doesn't exist
    */
-  async getActiveFollowers(
+  async getActiveFollowersAtGym(
     gymId: string,
     userId: string,
+    paginationDto: PaginationDto,
   ): Promise<ActiveFollower[]> {
     // Validate gym exists
-    const gym = await this.gymRepository.findOne({
-      where: { id: gymId },
-    });
-
-    if (!gym) {
-      throw new NotFoundException(`Gym with ID ${gymId} not found`);
-    }
+    await this.findOneOrFail(gymId);
 
     // Get active user IDs from Redis
     const activeUserIds = await this.presenceService.getActiveUsers(gymId);
-
-    console.log('Active user IDs at gym:', activeUserIds);
 
     if (activeUserIds.length === 0) {
       return [];
@@ -245,55 +241,26 @@ export class GymsService {
     // Get user's following list (accepted only)
     const followingResult = await this.socialService.getFollowing(
       userId,
-      1,
-      1000,
+      paginationDto,
       FollowStatus.ACCEPTED,
     );
-
-    console.log('User is following:', followingResult.data);
 
     if (followingResult.data.length === 0) {
       return [];
     }
 
-    // Create a map for quick lookup of following user details
-    const followingMap = new Map(
-      followingResult.data.map((f) => [f.userId, f]),
-    );
+    // Use Set for O(1) lookup instead of Map if we only need IDs
+    const followingIds = new Set(followingResult.data.map((f) => f.userId));
 
-    // Compute intersection
-    const activeFollowers = activeUserIds.filter((user) =>
-      followingMap.has(user.userId),
-    );
+    // Filter and map in one pass
+    const activeFollowers: ActiveFollower[] = activeUserIds
+      .filter((user) => followingIds.has(user.userId))
+      .map((user) => ({
+        userId: user.userId,
+        username: user.username,
+      }));
 
-    console.log('Active followers at gym:', activeFollowers);
-
-    return activeFollowers as unknown as ActiveFollower[];
-    // Get timestamps for active followers
-    // const timestamps = await this.presenceService.getCheckinTimestamps(
-    //   gymId,
-    //   activeFollowerIds,
-    // );
-
-    // Build responsed
-    // const activeFollowers: ActiveFollower[] = activeFollowerIds.map((id) => {
-    //   const following = followingMap.get(id);
-    //   // const checkedInAt = timestamps.get(id) || now;
-
-    //   return {
-    //     userId: id,
-    //     username: following.username,
-    //     // name: following.name,
-    //     imageUrl: following.imageUrl,
-    //     // checkedInAt,
-    //     // checkedInAgo: this.formatTimeAgo(now - checkedInAt),
-    //   };
-    // });
-
-    // // Sort by check-in time (most recent first)
-    // // activeFollowers.sort((a, b) => b.checkedInAt - a.checkedInAt);
-
-    // return activeFollowers;
+    return activeFollowers;
   }
 
   /**

@@ -1,6 +1,8 @@
 import { Gym } from 'src/features/gyms/entities/gym.entity';
 import {
+  AfterInsert,
   AfterLoad,
+  AfterUpdate,
   Column,
   Entity,
   JoinColumn,
@@ -77,6 +79,8 @@ export class User {
   age: number;
 
   @AfterLoad()
+  @AfterUpdate()
+  @AfterInsert()
   calculateAge() {
     if (this.birthdate) {
       const today = new Date();

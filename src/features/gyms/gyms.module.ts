@@ -10,6 +10,7 @@ import { User } from '../users/entities/user.entity';
 import { RedisModule } from 'src/infra/redis/redis.module';
 import { GymPresenceService } from './services/gym-presence.service';
 import { SocialModule } from '../social/social.module';
+import { UsersModule } from '../users/users.module';
 
 /**
  * Gyms Module
@@ -25,8 +26,9 @@ import { SocialModule } from '../social/social.module';
  */
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Gym, GymEquipment, User]),
+    TypeOrmModule.forFeature([Gym, GymEquipment]),
     RedisModule,
+    UsersModule.register({ searchProvider: 'relational' }),
     SocialModule.register({ type: 'relational', withController: false }),
   ],
   controllers: [GymsController, GymEquipmentController],

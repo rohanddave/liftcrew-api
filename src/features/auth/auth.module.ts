@@ -33,7 +33,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
     ConfigModule,
     FirebaseModule,
     TypeOrmModule.forFeature([RefreshToken]),
-    UsersModule,
+    UsersModule.register({ searchProvider: 'relational' }),
     // TODO: remove this depdenency and use event emitter to remove tokens on logout
     NotificationsModule,
   ],

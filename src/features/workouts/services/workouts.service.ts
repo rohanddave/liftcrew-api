@@ -11,6 +11,7 @@ import {
   Between,
   FindOptionsWhere,
   Equal,
+  DataSource,
 } from 'typeorm';
 import { Workout } from '../entities/workout.entity';
 import { WorkoutExercise } from '../entities/workout-exercise.entity';
@@ -27,6 +28,7 @@ import { UpdateParticipantDto } from '../dto/update-participant.dto';
 import { AddSetDto } from '../dto/add-set.dto';
 import { WorkoutQueryDto } from '../dto/workout-query.dto';
 import { UsersService } from 'src/features/users/services/users.service';
+import { Exercise } from '../entities/exercise.entity';
 
 /**
  * Service responsible for managing workout business logic and database operations.
@@ -45,7 +47,10 @@ export class WorkoutsService {
     private readonly exerciseSetRepository: Repository<ExerciseSet>,
     @InjectRepository(WorkoutParticipant)
     private readonly workoutParticipantRepository: Repository<WorkoutParticipant>,
+    @InjectRepository(Exercise)
+    private readonly exerciseRepository: Repository<Exercise>,
     private readonly usersService: UsersService,
+    private readonly dataSource: DataSource,
   ) {}
 
   /**
@@ -57,24 +62,27 @@ export class WorkoutsService {
     createdById: string,
     createWorkoutDto: CreateWorkoutDto,
   ): Promise<WorkoutParticipant> {
-    const workout = await this.workoutRepository.save({
-      ...createWorkoutDto,
-      createdById,
-      participantCount: 1,
-    });
-
-    // adding creator as participant
+    // check if user exists
     const user = await this.usersService.findOneOrFail(createdById);
-    const result = await this.workoutParticipantRepository.save({
-      workoutId: workout.id,
-      userId: createdById,
-      role: ParticipantRole.OWNER,
-      gymId: user.homeGymId,
-    });
 
-    return this.workoutParticipantRepository.findOne({
-      where: { id: result.id },
-      relations: { user: true, gym: true, workout: true },
+    return this.dataSource.transaction(async (manager) => {
+      const workout = await manager.save(Workout, {
+        ...createWorkoutDto,
+        createdById,
+        participantCount: 1,
+      });
+
+      const participant = manager.create(WorkoutParticipant, {
+        workoutId: workout.id,
+        userId: createdById,
+        role: ParticipantRole.OWNER,
+        gymId: user.homeGymId,
+        user,
+        workout,
+        gym: user.homeGym,
+      });
+
+      return manager.save(WorkoutParticipant, participant);
     });
   }
 
@@ -87,13 +95,14 @@ export class WorkoutsService {
   async findOneOrFail(id: string): Promise<Workout> {
     const workout = await this.workoutRepository.findOne({
       where: { id },
-      relations: [
-        'createdBy',
-        'participants',
-        'exercises',
-        'exercises.exercise',
-        'exercises.sets',
-      ],
+      relations: {
+        createdBy: true,
+        participants: true,
+        exercises: {
+          exercise: true,
+          sets: true,
+        },
+      },
     });
 
     if (!workout) {
@@ -118,10 +127,12 @@ export class WorkoutsService {
     const workout = await this.findOneOrFail(id);
 
     // Verify workout is not finished
-    await this.verifyWorkoutNotFinishedByParticipant(id, userId);
+    if (updateWorkoutDto.startedAt || updateWorkoutDto.endedAt) {
+      await this.verifyWorkoutNotFinishedByParticipant(id, userId);
+    }
 
     Object.assign(workout, updateWorkoutDto);
-    return await this.workoutRepository.save(workout);
+    return this.workoutRepository.save(workout);
   }
 
   /**
@@ -136,22 +147,33 @@ export class WorkoutsService {
     addWorkoutExerciseDto: AddWorkoutExerciseDto,
     userId: string,
   ): Promise<WorkoutExercise> {
-    await this.findOneOrFail(workoutId);
+    const [workout, existingExercise] = await Promise.all([
+      this.findOneOrFail(workoutId),
+      this.workoutExerciseRepository.findOne({
+        where: {
+          workoutId,
+          orderIndex: addWorkoutExerciseDto.orderIndex,
+        },
+      }),
+    ]);
 
-    // Verify workout is not finished
+    // Verify after fetching workout
     await this.verifyWorkoutNotFinishedByParticipant(workoutId, userId);
-
-    // Check if the orderIndex is already taken
-    const existingExercise = await this.workoutExerciseRepository.findOne({
-      where: {
-        workoutId,
-        orderIndex: addWorkoutExerciseDto.orderIndex,
-      },
-    });
 
     if (existingExercise) {
       throw new BadRequestException(
         `Exercise at order index ${addWorkoutExerciseDto.orderIndex} already exists`,
+      );
+    }
+
+    // Verify exercise exists
+    const exercise = await this.exerciseRepository.findOneBy({
+      id: addWorkoutExerciseDto.exerciseId,
+    });
+
+    if (!exercise) {
+      throw new NotFoundException(
+        `Exercise with id ${addWorkoutExerciseDto.exerciseId} not found`,
       );
     }
 
@@ -162,16 +184,12 @@ export class WorkoutsService {
       orderIndex: addWorkoutExerciseDto.orderIndex,
       notes: addWorkoutExerciseDto.notes,
       restSeconds: addWorkoutExerciseDto.restSeconds,
+      exercise, // Attach to avoid extra query
     });
 
-    const savedWorkoutExercise =
-      await this.workoutExerciseRepository.save(workoutExercise);
-
-    // Return the workout exercise with sets
-    return await this.workoutExerciseRepository.findOne({
-      where: { id: savedWorkoutExercise.id },
-      relations: ['exercise', 'sets'],
-    });
+    const saved = await this.workoutExerciseRepository.save(workoutExercise);
+    saved.sets = []; // New exercise has no sets yet
+    return saved;
   }
 
   /**
@@ -186,17 +204,16 @@ export class WorkoutsService {
     workoutExerciseId: string,
     userId: string,
   ): Promise<void> {
-    await this.findOneOrFail(workoutId);
-
-    // Verify workout is not finished
-    await this.verifyWorkoutNotFinishedByParticipant(workoutId, userId);
-
-    const workoutExercise = await this.workoutExerciseRepository.findOne({
-      where: {
-        id: workoutExerciseId,
-        workoutId,
-      },
-    });
+    // Parallel reads
+    const [workout, workoutExercise] = await Promise.all([
+      this.findOneOrFail(workoutId),
+      this.workoutExerciseRepository.findOne({
+        where: {
+          id: workoutExerciseId,
+          workoutId,
+        },
+      }),
+    ]);
 
     if (!workoutExercise) {
       throw new NotFoundException(
@@ -204,7 +221,8 @@ export class WorkoutsService {
       );
     }
 
-    // Sets will be automatically deleted due to CASCADE on delete
+    await this.verifyWorkoutNotFinishedByParticipant(workoutId, userId);
+
     await this.workoutExerciseRepository.remove(workoutExercise);
   }
 
@@ -222,16 +240,14 @@ export class WorkoutsService {
     workoutId: string,
     addParticipantDto: AddParticipantDto,
   ): Promise<WorkoutParticipant> {
-    const workout = await this.findOneOrFail(workoutId);
-
-    // Verify workout is not finished
-    await this.verifyWorkoutNotFinishedByParticipant(workoutId, userId);
-
-    const user = await this.usersService.findOneOrFail(userId);
-
-    const existingParticipants = await this.workoutParticipantRepository.find({
-      where: { workoutId },
-    });
+    const [workout, user, existingParticipants] = await Promise.all([
+      this.findOneOrFail(workoutId),
+      this.usersService.findOneOrFail(userId),
+      this.workoutParticipantRepository.find({
+        where: { workoutId },
+        select: { userId: true },
+      }),
+    ]);
 
     if (existingParticipants.length >= this.MAX_PARTICIPANTS_PER_WORKOUT) {
       throw new BadRequestException(
@@ -250,14 +266,24 @@ export class WorkoutsService {
       );
     }
 
-    // Increment participant count
-    await this.workoutRepository.increment({ id: workoutId }, 'participantCount', 1);
+    // Use transaction to ensure consistency
+    return this.dataSource.transaction(async (manager) => {
+      await manager.increment(
+        Workout,
+        { id: workoutId },
+        'participantCount',
+        1,
+      );
 
-    return await this.workoutParticipantRepository.save({
-      workoutId,
-      userId,
-      role: addParticipantDto.role,
-      gymId: addParticipantDto.gymId ?? user.homeGymId, // default to user's home gym
+      const participant = manager.create(WorkoutParticipant, {
+        workoutId,
+        userId,
+        role: addParticipantDto.role,
+        gymId: addParticipantDto.gymId ?? user.homeGymId,
+        user, // Attach to avoid extra query
+      });
+
+      return manager.save(WorkoutParticipant, participant);
     });
   }
 
@@ -270,16 +296,13 @@ export class WorkoutsService {
    * @throws NotFoundException if workout or participant doesn't exist
    */
   async removeParticipant(workoutId: string, userId: string): Promise<void> {
-    await this.findOneOrFail(workoutId);
-
-    // Verify workout is not finished
-    await this.verifyWorkoutNotFinishedByParticipant(workoutId, userId);
-
-    await this.usersService.findOneOrFail(userId);
-
-    const participant = await this.workoutParticipantRepository.findOne({
-      where: { workoutId, userId },
-    });
+    const [workout, participant] = await Promise.all([
+      this.findOneOrFail(workoutId),
+      this.workoutParticipantRepository.findOne({
+        where: { workoutId, userId },
+        select: { role: true, userId: true },
+      }),
+    ]);
 
     if (!participant) {
       throw new NotFoundException(
@@ -287,11 +310,23 @@ export class WorkoutsService {
       );
     }
 
-    // remove the leaving participant
-    await this.workoutParticipantRepository.remove(participant);
+    // Prevent owner from leaving
+    if (participant.role === ParticipantRole.OWNER) {
+      throw new BadRequestException('Workout owner cannot be removed');
+    }
 
-    // Decrement participant count
-    await this.workoutRepository.decrement({ id: workoutId }, 'participantCount', 1);
+    return this.dataSource.transaction(async (manager) => {
+      // remove the leaving participant
+      await manager.remove(WorkoutParticipant, participant);
+
+      // Decrement participant count
+      await manager.decrement(
+        Workout,
+        { id: workoutId },
+        'participantCount',
+        1,
+      );
+    });
   }
 
   /**
@@ -309,11 +344,6 @@ export class WorkoutsService {
     userId: string,
     updateParticipantDto: UpdateParticipantDto,
   ): Promise<WorkoutParticipant> {
-    await this.usersService.findOneOrFail(userId);
-
-    // Verify workout is not finished
-    await this.verifyWorkoutNotFinishedByParticipant(workoutId, userId);
-
     const participant = await this.workoutParticipantRepository.findOne({
       where: { workoutId, userId },
     });
@@ -324,11 +354,15 @@ export class WorkoutsService {
       );
     }
 
+    if (updateParticipantDto.startAt || updateParticipantDto.finishedAt) {
+      await this.verifyWorkoutNotFinishedByParticipant(workoutId, userId);
+    }
+
     // Apply updates
     Object.assign(participant, updateParticipantDto);
 
     // Save and return the updated participant
-    return await this.workoutParticipantRepository.save(participant);
+    return this.workoutParticipantRepository.save(participant);
   }
 
   /**
@@ -347,16 +381,18 @@ export class WorkoutsService {
     userId: string,
     finishedAt: Date,
   ): Promise<WorkoutParticipant> {
-    // Verify workout exists
-    await this.findOneOrFail(workoutId);
-
-    // Get the participant
-    const participant = await this.workoutParticipantRepository.findOne({
-      where: { workoutId, userId },
-    });
+    const [participant, exerciseCount] = await Promise.all([
+      // Get the participant
+      this.workoutParticipantRepository.findOne({
+        where: { workoutId, userId },
+      }),
+      // Count the number of exercises tracked for this workout
+      this.workoutExerciseRepository.count({
+        where: { workoutId },
+      }),
+    ]);
 
     if (!participant) {
-      console.log('participant not found');
       throw new NotFoundException(
         `You are not a participant in workout ${workoutId}`,
       );
@@ -365,7 +401,6 @@ export class WorkoutsService {
     // Validate that finishedAt is not in the future
     const now = new Date();
     if (finishedAt > now) {
-      console.log('finishedAt is in the future');
       throw new BadRequestException(
         'Cannot finish workout: finishedAt cannot be in the future',
       );
@@ -373,8 +408,6 @@ export class WorkoutsService {
 
     // Validate that startAt is on the same day as current time
     const startAtDate = new Date(participant.startAt);
-    console.log('startAtDate:', startAtDate);
-    console.log('finishedAt: ', finishedAt);
 
     const isSameDay =
       startAtDate.getFullYear() === now.getFullYear() &&
@@ -382,19 +415,13 @@ export class WorkoutsService {
       startAtDate.getDate() === now.getDate();
 
     if (!isSameDay) {
-      console.log('not the same day');
       throw new BadRequestException(
         'Cannot finish workout: workout can only be finished on the day it was scheduled',
       );
     }
 
     // Check if at least one exercise has been tracked for this workout
-    const exerciseCount = await this.workoutExerciseRepository.count({
-      where: { workoutId },
-    });
-
     if (exerciseCount === 0) {
-      console.log('no exercises tracked');
       throw new BadRequestException(
         'Cannot finish workout: at least one exercise must be tracked',
       );
@@ -408,9 +435,9 @@ export class WorkoutsService {
   }
 
   /**
-   * Checks if a workout has been finished by any participant.
+   * Checks if a workout has been finished by the participant.
    * @param workoutId - The UUID of the workout
-   * @returns Promise<boolean> True if any participant has finished, false otherwise
+   * @returns Promise<boolean> True if the participant has finished, false otherwise
    */
   private async isWorkoutFinished(
     workoutId: string,
@@ -478,12 +505,10 @@ export class WorkoutsService {
     workoutId: string,
     userId: string,
   ): Promise<WorkoutParticipant | null> {
-    const participant = await this.workoutParticipantRepository.findOne({
+    return this.workoutParticipantRepository.findOne({
       where: { workoutId, userId },
       relations: { user: true, gym: true, sets: true },
     });
-
-    return participant;
   }
 
   /**
@@ -492,13 +517,11 @@ export class WorkoutsService {
    * @returns Promise<WorkoutParticipant[]> Array of participants with relations
    */
   async getAllParticipants(workoutId: string): Promise<WorkoutParticipant[]> {
-    const participants = await this.workoutParticipantRepository.find({
+    return this.workoutParticipantRepository.find({
       where: { workoutId },
       relations: { user: true, gym: true },
       order: { joinedAt: 'ASC' },
     });
-
-    return participants;
   }
 
   /**
@@ -514,49 +537,27 @@ export class WorkoutsService {
     workoutExerciseId: string,
     addSetDto: AddSetDto,
   ): Promise<ExerciseSet> {
-    await this.findOneOrFail(workoutId);
-
-    // Verify workout is not finished
-    await this.verifyWorkoutNotFinishedByParticipant(
-      workoutId,
-      addSetDto.participantId,
-    );
-
-    const workoutExercise = await this.workoutExerciseRepository.findOne({
-      where: {
-        id: workoutExerciseId,
+    const [_, workoutExercise, existingSet] = await Promise.all([
+      // Verify workout is not finished
+      this.verifyWorkoutNotFinishedByParticipant(
         workoutId,
-      },
-    });
-
-    if (!workoutExercise) {
-      throw new NotFoundException(
-        `Exercise with ID ${workoutExerciseId} not found in workout ${workoutId}`,
-      );
-    }
-
-    // Verify participant exists and belongs to this workout
-    const participant = await this.workoutParticipantRepository.findOne({
-      where: {
-        id: addSetDto.participantId,
-        workoutId,
-      },
-    });
-
-    if (!participant) {
-      throw new NotFoundException(
-        `Participant ${addSetDto.participantId} not found in workout ${workoutId}`,
-      );
-    }
-
-    // Check if set number already exists for this participant
-    const existingSet = await this.exerciseSetRepository.findOne({
-      where: {
-        workoutExerciseId,
-        participantId: addSetDto.participantId,
-        setNumber: addSetDto.setNumber,
-      },
-    });
+        addSetDto.participantId,
+      ),
+      this.workoutExerciseRepository.findOne({
+        where: {
+          id: workoutExerciseId,
+          workoutId,
+        },
+      }),
+      // Check if set number already exists for this participant
+      this.exerciseSetRepository.findOne({
+        where: {
+          workoutExerciseId,
+          participantId: addSetDto.participantId,
+          setNumber: addSetDto.setNumber,
+        },
+      }),
+    ]);
 
     if (existingSet) {
       throw new BadRequestException(
@@ -569,7 +570,7 @@ export class WorkoutsService {
       ...addSetDto,
     });
 
-    return await this.exerciseSetRepository.save(set);
+    return this.exerciseSetRepository.save(set);
   }
 
   /**
@@ -586,30 +587,28 @@ export class WorkoutsService {
     setId: string,
     userId: string,
   ): Promise<void> {
-    await this.findOneOrFail(workoutId);
-
-    // Verify workout is not finished
-    await this.verifyWorkoutNotFinishedByParticipant(workoutId, userId);
-
-    const workoutExercise = await this.workoutExerciseRepository.findOne({
-      where: {
-        id: workoutExerciseId,
-        workoutId,
-      },
-    });
+    const [workoutExercise, _, set] = await Promise.all([
+      this.workoutExerciseRepository.findOne({
+        where: {
+          id: workoutExerciseId,
+          workoutId,
+        },
+      }),
+      // Verify workout is not finished
+      this.verifyWorkoutNotFinishedByParticipant(workoutId, userId),
+      this.exerciseSetRepository.findOne({
+        where: {
+          id: setId,
+          workoutExerciseId,
+        },
+      }),
+    ]);
 
     if (!workoutExercise) {
       throw new NotFoundException(
         `Exercise with ID ${workoutExerciseId} not found in workout ${workoutId}`,
       );
     }
-
-    const set = await this.exerciseSetRepository.findOne({
-      where: {
-        id: setId,
-        workoutExerciseId,
-      },
-    });
 
     if (!set) {
       throw new NotFoundException(
@@ -663,41 +662,7 @@ export class WorkoutsService {
     });
 
     return participations;
-
-    // return participations.map((p) => {
-    //   const status = this.computeWorkoutStatus(p.startAt, p.finishedAt, now);
-    //   return {
-    //     ...p.workout,
-    //     status,
-    //   };
-    // });
   }
-
-  /**
-   * Computes the status of a workout based on startAt and finishedAt timestamps
-   * @param startAt - When the workout was scheduled to start
-   * @param finishedAt - When the workout was finished (nullable)
-   * @param now - Current timestamp for comparison
-   * @returns WorkoutParticipationStatus
-   */
-  // private computeWorkoutStatus(
-  //   startAt: Date,
-  //   finishedAt: Date | null,
-  //   now: Date,
-  // ): WorkoutParticipationStatus {
-  //   // If startAt is in the future, it's scheduled
-  //   if (startAt > now) {
-  //     return WorkoutParticipationStatus.SCHEDULED;
-  //   }
-
-  //   // If startAt has passed and finishedAt is set, it's finished
-  //   if (finishedAt) {
-  //     return WorkoutParticipationStatus.FINISHED;
-  //   }
-
-  //   // If startAt has passed and finishedAt is not set, it's missed
-  //   return WorkoutParticipationStatus.MISSED;
-  // }
 
   /**
    * Deletes a workout and all associated data.

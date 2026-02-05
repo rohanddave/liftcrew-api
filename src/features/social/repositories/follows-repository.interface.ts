@@ -1,3 +1,4 @@
+import { PaginationDto } from 'src/common/pagination';
 import { FollowStatus } from '../types';
 
 export interface FollowRelationship {
@@ -64,8 +65,7 @@ export interface FollowsRepository {
    */
   findFollowers(
     userId: string,
-    page: number,
-    limit: number,
+    paginationDto: PaginationDto,
     status?: FollowStatus,
   ): Promise<{ data: FollowerResult[]; total: number }>;
 
@@ -74,8 +74,7 @@ export interface FollowsRepository {
    */
   findFollowing(
     userId: string,
-    page: number,
-    limit: number,
+    paginationDto: PaginationDto,
     status?: FollowStatus,
   ): Promise<{ data: FollowerResult[]; total: number }>;
 
@@ -87,9 +86,7 @@ export interface FollowsRepository {
   /**
    * Get follower and following counts.
    */
-  getStats(
-    userId: string,
-  ): Promise<{
+  getStats(userId: string): Promise<{
     followerCount: number;
     followingCount: number;
     pendingRequestsCount: number;

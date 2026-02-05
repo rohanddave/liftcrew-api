@@ -24,7 +24,7 @@ export class GymEquipmentService {
     createGymEquipmentDto: CreateGymEquipmentDto,
   ): Promise<GymEquipment> {
     const equipment = this.gymEquipmentRepository.create(createGymEquipmentDto);
-    return await this.gymEquipmentRepository.save(equipment);
+    return this.gymEquipmentRepository.save(equipment);
   }
 
   /**
@@ -32,7 +32,7 @@ export class GymEquipmentService {
    * @returns Promise<GymEquipment[]> Array of all gym equipment
    */
   async findAll(): Promise<GymEquipment[]> {
-    return await this.gymEquipmentRepository.find();
+    return this.gymEquipmentRepository.find();
   }
 
   /**
@@ -41,11 +41,8 @@ export class GymEquipmentService {
    * @returns Promise<GymEquipment> The equipment entity
    * @throws NotFoundException if equipment not found
    */
-  async findOne(id: string): Promise<GymEquipment> {
-    const equipment = await this.gymEquipmentRepository.findOne({
-      where: { id },
-      relations: ['gyms'],
-    });
+  async findOneOrFail(id: string): Promise<GymEquipment> {
+    const equipment = await this.gymEquipmentRepository.findOneBy({ id });
 
     if (!equipment) {
       throw new NotFoundException(`Gym equipment with ID ${id} not found`);
@@ -65,9 +62,11 @@ export class GymEquipmentService {
     id: string,
     updateGymEquipmentDto: UpdateGymEquipmentDto,
   ): Promise<GymEquipment> {
-    const equipment = await this.findOne(id);
+    const equipment = await this.findOneOrFail(id);
+
     Object.assign(equipment, updateGymEquipmentDto);
-    return await this.gymEquipmentRepository.save(equipment);
+
+    return this.gymEquipmentRepository.save(equipment);
   }
 
   /**
@@ -77,7 +76,8 @@ export class GymEquipmentService {
    * @throws NotFoundException if equipment not found
    */
   async remove(id: string): Promise<void> {
-    const equipment = await this.findOne(id);
+    const equipment = await this.findOneOrFail(id);
+
     await this.gymEquipmentRepository.remove(equipment);
   }
 
@@ -87,7 +87,7 @@ export class GymEquipmentService {
    * @returns Promise<GymEquipment[]> Array of equipment matching the type
    */
   async findByType(type: string): Promise<GymEquipment[]> {
-    return await this.gymEquipmentRepository.find({
+    return this.gymEquipmentRepository.find({
       where: { type },
     });
   }

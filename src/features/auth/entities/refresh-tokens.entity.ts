@@ -1,12 +1,4 @@
-import { User } from 'src/features/users/entities/user.entity';
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  JoinColumn,
-  Index,
-} from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, Index } from 'typeorm';
 
 /**
  * Entity representing refresh tokens stored in the database.

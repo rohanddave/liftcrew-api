@@ -21,28 +21,6 @@ export class CreateUserDto {
   @IsString()
   username: string;
 
-  // /**
-  //  * User's email address.
-  //  * Must be a valid email format and unique across the platform.
-  //  * @example "john.doe@example.com"
-  //  */
-  // @IsOptional()
-  // @IsEmail()
-  // email: string | null;
-
-  // @IsOptional()
-  // @IsString()
-  // @IsPhoneNumber()
-  // phoneNumber: string | null;
-
-  // /**
-  //  * Full name of the user.
-  //  * @example "John Doe"
-  //  */
-  // @IsNotEmpty()
-  // @IsString()
-  // name: string;
-
   /**
    * User's height in centimeters.
    * @example 175

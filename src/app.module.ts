@@ -48,7 +48,7 @@ import { NotificationsModule } from './features/notifications/notifications.modu
     }),
     FirebaseModule,
     AuthModule,
-    UsersModule,
+    UsersModule.register({ searchProvider: 'relational' }),
     GymsModule,
     SocialModule.register({ type: 'relational', withController: true }),
     WorkoutsModule,

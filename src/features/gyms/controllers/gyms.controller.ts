@@ -9,6 +9,7 @@ import {
   HttpCode,
   HttpStatus,
   Req,
+  Query,
 } from '@nestjs/common';
 import { GymsService } from '../services/gyms.service';
 import { CreateGymDto } from '../dto/create-gym.dto';
@@ -16,6 +17,7 @@ import { UpdateGymDto } from '../dto/update-gym.dto';
 import { CheckInDto } from '../dto/check-in.dto';
 import { Protected, Public } from 'src/common/decorators';
 import { RequestWithUser } from 'src/common/types/request.type';
+import { PaginationDto } from 'src/common/pagination';
 
 /**
  * Controller for managing gym-related operations.
@@ -31,8 +33,8 @@ export class GymsController {
    */
   @Protected()
   @Get()
-  findAll() {
-    return this.gymsService.findAll();
+  findAll(@Query() paginationDto: PaginationDto) {
+    return this.gymsService.findAll(paginationDto);
   }
 
   /**
@@ -52,6 +54,7 @@ export class GymsController {
    * @returns Promise<Gym> The newly created gym entity
    */
   @Post()
+  // TODO: restrict to admin users
   @Public()
   create(@Body() createGymDto: CreateGymDto) {
     return this.gymsService.create(createGymDto);
@@ -92,13 +95,11 @@ export class GymsController {
    */
   @Post('check-in')
   async checkIn(@Req() req: RequestWithUser, @Body() checkInDto: CheckInDto) {
-    const result = await this.gymsService.checkIn(
+    return this.gymsService.checkIn(
       req.user.id,
       checkInDto.lat,
       checkInDto.lng,
     );
-    console.log('Check-in result:', result);
-    return result;
   }
 
   /**
@@ -126,7 +127,12 @@ export class GymsController {
   async getActiveFollowers(
     @Req() req: RequestWithUser,
     @Param('id') gymId: string,
+    @Query() paginationDto: PaginationDto,
   ) {
-    return this.gymsService.getActiveFollowers(gymId, req.user.id);
+    return this.gymsService.getActiveFollowersAtGym(
+      gymId,
+      req.user.id,
+      paginationDto,
+    );
   }
 }

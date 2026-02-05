@@ -14,9 +14,9 @@ import { SocialService } from '../services/social.service';
 import { SendFollowRequestDto } from '../dto/send-follow-request.dto';
 import { AcceptFollowRequestDto } from '../dto/accept-follow-request.dto';
 import { RejectFollowRequestDto } from '../dto/reject-follow-request.dto';
-import { PaginationDto } from '../dto/pagination.dto';
 import { FollowStatus } from '../types';
 import { RequestWithUser } from 'src/common/types/request.type';
+import { PaginationDto } from 'src/common/pagination';
 
 @Controller('follows')
 export class FollowsController {
@@ -99,8 +99,7 @@ export class FollowsController {
   ) {
     const result = await this.socialService.getFollowers(
       userId,
-      paginationDto.page,
-      paginationDto.limit,
+      paginationDto,
       status,
     );
 
@@ -130,8 +129,7 @@ export class FollowsController {
   ) {
     const result = await this.socialService.getFollowing(
       userId,
-      paginationDto.page,
-      paginationDto.limit,
+      paginationDto,
       status,
     );
 

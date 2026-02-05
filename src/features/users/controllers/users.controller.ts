@@ -10,10 +10,9 @@ import {
   Query,
   HttpCode,
   HttpStatus,
-  UseGuards,
 } from '@nestjs/common';
 import { UsersService } from '../services/users.service';
-import { UsersSearchService } from '../services/users-search.service';
+import { UserSearchService } from '../services/users-search.service';
 import {
   RequestWithEmail,
   RequestWithUser,
@@ -21,6 +20,7 @@ import {
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { Protected } from 'src/common/decorators';
+import { SearchUsersDto } from '../dto/search-users.dto';
 
 /**
  * Controller for managing user-related operations.
@@ -30,7 +30,7 @@ import { Protected } from 'src/common/decorators';
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
-    private readonly usersSearchService: UsersSearchService,
+    private readonly usersSearchService: UserSearchService,
   ) {}
 
   /**
@@ -41,10 +41,11 @@ export class UsersController {
   @Get('search')
   async search(
     @Req() request: RequestWithUser,
-    @Query('username') username: string,
+    @Query() searchQuery: SearchUsersDto,
   ) {
     const { user } = request;
-    const users = await this.usersSearchService.searchByUsername(username);
+    const { data: users } =
+      await this.usersSearchService.searchByUsername(searchQuery);
     // exclude current user
     return users.filter((u) => u.id !== user.id);
   }
@@ -82,8 +83,7 @@ export class UsersController {
     @Body() createUserDto: CreateUserDto,
   ) {
     const { email } = request;
-    const createdUser = await this.usersService.create(createUserDto, email);
-    return createdUser;
+    return this.usersService.create(createUserDto, email);
   }
 
   /**

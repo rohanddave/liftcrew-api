@@ -49,9 +49,7 @@ export class WorkoutsController {
     @Query() query: WorkoutQueryDto,
   ) {
     const { user } = request;
-    const response = await this.workoutsService.findAllForUser(user.id, query);
-    console.log('printing workout participations for user: ', response);
-    return response;
+    return this.workoutsService.findAllForUser(user.id, query);
   }
 
   /**
@@ -126,8 +124,11 @@ export class WorkoutsController {
     @Param('id') workoutId: string,
   ) {
     const { user } = request;
-    await this.workoutsService.verifyUserIsParticipant(workoutId, user.id);
-    return this.workoutsService.getAllParticipants(workoutId);
+    const [result] = await Promise.all([
+      this.workoutsService.getAllParticipants(workoutId),
+      this.workoutsService.verifyUserIsParticipant(workoutId, user.id),
+    ]);
+    return result;
   }
 
   /**
@@ -142,12 +143,7 @@ export class WorkoutsController {
     @Param('id') workoutId: string,
   ) {
     const { user } = request;
-    const result = await this.workoutsService.getMyParticipation(
-      workoutId,
-      user.id,
-    );
-    console.log('printing my participation: ', result);
-    return result;
+    return this.workoutsService.getMyParticipation(workoutId, user.id);
   }
 
   /**

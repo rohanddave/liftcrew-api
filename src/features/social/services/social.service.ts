@@ -13,6 +13,7 @@ import {
   FollowAcceptedEvent,
 } from '../../notifications/interfaces/events.interface';
 import { NotificationType } from '../../notifications/types';
+import { PaginationDto } from 'src/common/pagination/pagination.dto';
 
 @Injectable()
 export class SocialService {
@@ -151,11 +152,10 @@ export class SocialService {
    */
   async getFollowers(
     userId: string,
-    page: number = 1,
-    limit: number = 20,
+    paginationDto: PaginationDto,
     status?: FollowStatus,
   ) {
-    return this.followsRepository.findFollowers(userId, page, limit, status);
+    return this.followsRepository.findFollowers(userId, paginationDto, status);
   }
 
   /**
@@ -163,11 +163,10 @@ export class SocialService {
    */
   async getFollowing(
     userId: string,
-    page: number = 1,
-    limit: number = 20,
+    paginationDto: PaginationDto,
     status?: FollowStatus,
   ) {
-    return this.followsRepository.findFollowing(userId, page, limit, status);
+    return this.followsRepository.findFollowing(userId, paginationDto, status);
   }
 
   /**

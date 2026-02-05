@@ -103,9 +103,7 @@ export class JWTTokenGuard implements CanActivate {
     );
 
     // short circuit if route is marked as public
-    if (isPublic) {
-      return true;
-    }
+    if (isPublic) return true;
 
     const authorization = request.headers.authorization;
 

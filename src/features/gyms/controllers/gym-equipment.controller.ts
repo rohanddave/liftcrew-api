@@ -42,7 +42,7 @@ export class GymEquipmentController {
    */
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.gymEquipmentService.findOne(id);
+    return this.gymEquipmentService.findOneOrFail(id);
   }
 
   /**

@@ -20,6 +20,7 @@ export class AuthService {
    * @returns void
    */
   async logout(user: User): Promise<void> {
+    // unregister FCM token for push notifications
     await this.notificationsService.unregisterFcmToken(user.id);
     return;
   }

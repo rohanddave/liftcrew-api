@@ -3,7 +3,7 @@ import { RedisService } from 'src/infra/redis/redis.service';
 
 export interface GymPresenceUser {
   userId: string;
-  [key: string]: string | number; // flexible additional fields
+  [key: string]: string; // flexible additional fields
 }
 
 @Injectable()

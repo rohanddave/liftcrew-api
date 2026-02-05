@@ -13,7 +13,7 @@ import { ExerciseSet } from './set.entity';
 import { Exercise } from './exercise.entity';
 
 @Entity('workout_exercises')
-@Unique(['workout', 'orderIndex'])
+@Unique(['workoutId', 'orderIndex'])
 export class WorkoutExercise {
   @PrimaryGeneratedColumn('uuid')
   id: string;

@@ -37,7 +37,7 @@ export class SocialModule {
 
   private static getImports(options: SocialModuleOptions) {
     const imports = [];
-    imports.push(UsersModule);
+    imports.push(UsersModule.register({ searchProvider: 'relational' }));
     // Add imports based on the type of social module
     if (options.type === 'graph') {
       imports.push(Neo4jModule);

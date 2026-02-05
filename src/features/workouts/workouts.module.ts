@@ -16,7 +16,7 @@ import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
-    UsersModule,
+    UsersModule.register({ searchProvider: 'relational' }),
     TypeOrmModule.forFeature([
       MuscleGroup,
       Exercise,
@@ -27,7 +27,12 @@ import { UsersModule } from '../users/users.module';
     ]),
   ],
   controllers: [ExercisesController, WorkoutsController],
-  providers: [ExercisesService, WorkoutsService, MuscleGroupSeedService, ExerciseSeedService],
+  providers: [
+    ExercisesService,
+    WorkoutsService,
+    MuscleGroupSeedService,
+    ExerciseSeedService,
+  ],
   exports: [ExercisesService, WorkoutsService],
 })
 export class WorkoutsModule {}

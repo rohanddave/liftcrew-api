@@ -12,7 +12,7 @@ import { FeedModule } from '../feed/feed.module';
   imports: [
     TypeOrmModule.forFeature([Post, Kudos]),
     WorkoutsModule,
-    UsersModule,
+    UsersModule.register({ searchProvider: 'relational' }),
     FeedModule,
   ],
   controllers: [PostsController],

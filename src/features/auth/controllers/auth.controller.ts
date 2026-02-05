@@ -55,8 +55,7 @@ export class AuthController {
   @Post('exchange')
   @UseGuards(SocialTokenGuard)
   async exchangeToken(@Req() req: RequestWithToken) {
-    const response = await this.tokenService.exchangeFirebaseToken(req.token);
-    return response;
+    return this.tokenService.exchangeFirebaseToken(req.token);
   }
 
   /**

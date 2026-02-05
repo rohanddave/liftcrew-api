@@ -1,12 +1,21 @@
-import { Module } from '@nestjs/common';
+import { DynamicModule, Module } from '@nestjs/common';
 import { UsersController } from './controllers/users.controller';
 import { UsersService } from './services/users.service';
-import { UsersSearchService } from './services/users-search.service';
+import {
+  ElasticsearchUsersSearchService,
+  RelationalUsersSearchService,
+  UserSearchService,
+} from './services/users-search.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
-import { GymsModule } from '../gyms/gyms.module';
 import { FirebaseModule } from 'src/infra/firebase/firebase.module';
 import { Gym } from '../gyms/entities/gym.entity';
+
+export type SearchProvider = 'relational' | 'elasticsearch';
+
+interface UsersModuleOptions {
+  searchProvider: SearchProvider;
+}
 
 /**
  * Users Module
@@ -20,10 +29,24 @@ import { Gym } from '../gyms/entities/gym.entity';
  * Exports:
  * - UsersService: For use in other modules that need user data access (e.g., AuthModule)
  */
-@Module({
-  imports: [FirebaseModule, TypeOrmModule.forFeature([User, Gym])],
-  controllers: [UsersController],
-  providers: [UsersService, UsersSearchService],
-  exports: [UsersService],
-})
-export class UsersModule {}
+
+@Module({})
+export class UsersModule {
+  static register(options: UsersModuleOptions): DynamicModule {
+    const searchProvider = {
+      provide: UserSearchService,
+      useClass:
+        options.searchProvider === 'elasticsearch'
+          ? ElasticsearchUsersSearchService
+          : RelationalUsersSearchService,
+    };
+
+    return {
+      module: UsersModule,
+      imports: [FirebaseModule, TypeOrmModule.forFeature([User, Gym])],
+      controllers: [UsersController],
+      providers: [UsersService, searchProvider],
+      exports: [UsersService, UserSearchService],
+    };
+  }
+}

@@ -54,7 +54,7 @@ export class TokenService {
     const refreshExpiry = this.configService.get<number>(
       'JWT_REFRESH_EXPIRY_SECONDS',
       1209600,
-    ); // Default to 14 days
+    ); 
     this.refreshExpirySeconds = refreshExpiry;
   }
 

@@ -8,6 +8,7 @@ import { Injectable } from '@nestjs/common';
 import { FollowStatus } from '../types';
 import { int } from 'neo4j-driver';
 import { UsersService } from 'src/features/users/services/users.service';
+import { PaginationDto } from 'src/common/pagination';
 
 /**
  * Neo4j-based implementation of the FollowsRepository.
@@ -168,13 +169,12 @@ export class GraphFollowsRepository implements FollowsRepository {
    */
   async findFollowers(
     userId: string,
-    page: number,
-    limit: number,
+    paginationDto: PaginationDto,
     status?: FollowStatus,
   ): Promise<{ data: FollowerResult[]; total: number }> {
     // Convert to Neo4j integers to avoid BigInt mixing errors
-    const skip = int((page - 1) * limit);
-    const intLimit = int(limit);
+    const skip = int(paginationDto.skip);
+    const intLimit = int(paginationDto.limit);
     const statusFilter = status ? 'AND r.status = $status' : '';
 
     const query = `
@@ -219,13 +219,12 @@ export class GraphFollowsRepository implements FollowsRepository {
    */
   async findFollowing(
     userId: string,
-    page: number,
-    limit: number,
+    paginationDto: PaginationDto,
     status?: FollowStatus,
   ): Promise<{ data: FollowerResult[]; total: number }> {
     // Convert to Neo4j integers to avoid BigInt mixing errors
-    const skip = int((page - 1) * limit);
-    const intLimit = int(limit);
+    const skip = int(paginationDto.skip);
+    const intLimit = int(paginationDto.limit);
     const statusFilter = status ? 'AND r.status = $status' : '';
 
     const query = `

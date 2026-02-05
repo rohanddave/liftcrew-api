@@ -5,6 +5,11 @@ import { User } from '../entities/user.entity';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { Gym } from 'src/features/gyms/entities/gym.entity';
+import {
+  paginate,
+  PaginatedResult,
+  PaginationDto,
+} from 'src/common/pagination';
 
 /**
  * Service responsible for managing user business logic and database operations.
@@ -23,8 +28,8 @@ export class UsersService {
    * Retrieves all users from the database.
    * @returns Promise<User[]> Array of all user entities
    */
-  async findAll(): Promise<User[]> {
-    return await this.userRepository.find();
+  async findAll(paginationDto: PaginationDto): Promise<PaginatedResult<User>> {
+    return paginate<User>(this.userRepository, paginationDto);
   }
 
   /**
@@ -32,11 +37,15 @@ export class UsersService {
    * Throws an exception if the user is not found.
    * @param id - The UUID of the user to find
    * @returns Promise<User> The user entity
-   * @throws EntityNotFoundError if no user exists with the given ID
+   * @throws NotFoundException if no user exists with the given ID
    */
   async findOneByEmailOrFail(email: string): Promise<User> {
-    const user = await this.userRepository.findOneByOrFail({ email });
-    return user;
+    try {
+      const user = await this.userRepository.findOneByOrFail({ email });
+      return user;
+    } catch (error) {
+      throw new NotFoundException(`User with email ${email} not found`);
+    }
   }
 
   /**
@@ -44,11 +53,15 @@ export class UsersService {
    * Throws an exception if the user is not found.
    * @param id - The UUID of the user to find
    * @returns Promise<User> The user entity
-   * @throws EntityNotFoundError if no user exists with the given ID
+   * @throws NotFoundException if no user exists with the given ID
    */
   async findOneOrFail(id: string): Promise<User> {
-    const user = await this.userRepository.findOneByOrFail({ id });
-    return user;
+    try {
+      const user = await this.userRepository.findOneByOrFail({ id });
+      return user;
+    } catch (error) {
+      throw new NotFoundException(`User with id ${id} not found`);
+    }
   }
 
   /**
@@ -56,11 +69,15 @@ export class UsersService {
    * Throws an exception if the user is not found.
    * @param id - The UUID of the user to find
    * @returns Promise<User> The user entity
-   * @throws EntityNotFoundError if no user exists with the given ID
+   * @throws NotFoundException if no user exists with the given ID
    */
   async findOneByEmail(email: string): Promise<User | null> {
-    const user = await this.userRepository.findOneBy({ email });
-    return user;
+    try {
+      const user = await this.userRepository.findOneBy({ email });
+      return user;
+    } catch (error) {
+      throw new NotFoundException(`User with email ${email} not found`);
+    }
   }
 
   /**
@@ -70,8 +87,7 @@ export class UsersService {
    * @returns Promise<User | null> The user entity if found, null otherwise
    */
   async findOne(id: string): Promise<User | null> {
-    const user = await this.userRepository.findOneBy({ id });
-    return user;
+    return this.userRepository.findOneBy({ id });
   }
 
   /**
@@ -80,7 +96,15 @@ export class UsersService {
    * @returns Promise<User> The newly created and saved user entity with computed age property
    */
   async create(createUserDto: CreateUserDto, email: string): Promise<User> {
-    await this.gymsRepository.findOneByOrFail({ id: createUserDto.homeGymId });
+    try {
+      await this.gymsRepository.findOneByOrFail({
+        id: createUserDto.homeGymId,
+      });
+    } catch (error) {
+      throw new NotFoundException(
+        `Gym with id ${createUserDto.homeGymId} not found`,
+      );
+    }
 
     // Create a new user entity from the DTO
     const user = this.userRepository.create({
@@ -89,11 +113,7 @@ export class UsersService {
     });
 
     // Persist the user to the database
-    const savedUser = await this.userRepository.save(user);
-
-    // Reload the user to trigger the @AfterLoad hook that computes the age
-    const userWithAge = await this.findOneOrFail(savedUser.id);
-    return userWithAge;
+    return this.userRepository.save(user);
   }
 
   /**
@@ -101,10 +121,10 @@ export class UsersService {
    * @param id - The UUID of the user to update
    * @param updateUserDto - The data transfer object containing updated user information
    * @returns Promise<User> The updated user entity
-   * @throws EntityNotFoundError if no user exists with the given ID
+   * @throws NotFoundException if no user exists with the given ID
    */
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
-    // First, verify the user exists (throws EntityNotFoundError if not found)
+    // First, verify the user exists (throws NotFoundException if not found)
     const user = await this.findOneOrFail(id);
 
     // Validate that the gym exists if homeGymId is being updated
@@ -116,19 +136,21 @@ export class UsersService {
 
     // Merge the updates into the existing user entity
     Object.assign(user, updateUserDto);
+
     // Save and return the updated user
-    return await this.userRepository.save(user);
+    return this.userRepository.save(user);
   }
 
   /**
    * Removes a user from the database.
    * @param id - The UUID of the user to remove
    * @returns Promise<void>
-   * @throws EntityNotFoundError if no user exists with the given ID
+   * @throws NotFoundException if no user exists with the given ID
    */
   async remove(id: string): Promise<void> {
-    // First, verify the user exists (throws EntityNotFoundError if not found)
+    // First, verify the user exists (throws NotFoundException if not found)
     const user = await this.findOneOrFail(id);
+
     // Remove the user from the database
     await this.userRepository.remove(user);
   }
@@ -137,9 +159,26 @@ export class UsersService {
    * Increments the kudos count for a user.
    * @param id - The UUID of the user
    * @returns Promise<void>
-   * @throws EntityNotFoundError if no user exists with the given ID
+   * @throws NotFoundException if no user exists with the given ID
    */
   async incrementKudosCount(id: string): Promise<void> {
-    await this.userRepository.increment({ id }, 'kudosCount', 1);
+    const result = await this.userRepository.increment({ id }, 'kudosCount', 1);
+
+    if (result.affected === 0) {
+      throw new NotFoundException(`User with id ${id} not found`);
+    }
+  }
+
+  async findOneWithHomeGym(id: string): Promise<User> {
+    const user = await this.userRepository.findOne({
+      where: { id },
+      relations: { homeGym: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with id ${id} not found`);
+    }
+
+    return user;
   }
 }

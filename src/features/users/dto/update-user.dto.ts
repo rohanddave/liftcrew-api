@@ -1,12 +1,4 @@
-import {
-  IsDateString,
-  IsEmail,
-  IsNumber,
-  IsOptional,
-  IsString,
-  IsUrl,
-  IsUUID,
-} from 'class-validator';
+import { IsNumber, IsOptional, IsString, IsUrl, IsUUID } from 'class-validator';
 
 /**
  * Data Transfer Object for updating an existing user.

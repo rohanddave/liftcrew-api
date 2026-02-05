@@ -21,8 +21,8 @@ export class ExercisesService {
    * @returns Promise<Exercise[]> Array of all exercise entities
    */
   async findAll(): Promise<Exercise[]> {
-    return await this.exerciseRepository.find({
-      relations: ['muscleGroups'],
+    return this.exerciseRepository.find({
+      relations: { muscleGroups: true },
     });
   }
 
@@ -36,7 +36,7 @@ export class ExercisesService {
   async findOneOrFail(id: string): Promise<Exercise> {
     const exercise = await this.exerciseRepository.findOne({
       where: { id },
-      relations: ['muscleGroups'],
+      relations: { muscleGroups: true },
     });
 
     if (!exercise) {
@@ -53,9 +53,9 @@ export class ExercisesService {
    * @returns Promise<Exercise | null> The exercise entity if found, null otherwise
    */
   async findOne(id: string): Promise<Exercise | null> {
-    return await this.exerciseRepository.findOne({
+    return this.exerciseRepository.findOne({
       where: { id },
-      relations: ['muscleGroups'],
+      relations: { muscleGroups: true },
     });
   }
 
@@ -66,7 +66,7 @@ export class ExercisesService {
    */
   async create(createExerciseDto: CreateExerciseDto): Promise<Exercise> {
     const exercise = this.exerciseRepository.create(createExerciseDto);
-    return await this.exerciseRepository.save(exercise);
+    return this.exerciseRepository.save(exercise);
   }
 
   /**
@@ -76,10 +76,13 @@ export class ExercisesService {
    * @returns Promise<Exercise> The updated exercise entity
    * @throws NotFoundException if no exercise exists with the given ID
    */
-  async update(id: string, updateExerciseDto: UpdateExerciseDto): Promise<Exercise> {
+  async update(
+    id: string,
+    updateExerciseDto: UpdateExerciseDto,
+  ): Promise<Exercise> {
     const exercise = await this.findOneOrFail(id);
     Object.assign(exercise, updateExerciseDto);
-    return await this.exerciseRepository.save(exercise);
+    return this.exerciseRepository.save(exercise);
   }
 
   /**

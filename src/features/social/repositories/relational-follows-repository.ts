@@ -8,6 +8,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Follows } from '../entities/follows.entity';
+import { PaginationDto } from 'src/common/pagination/pagination.dto';
 
 @Injectable()
 export class RelationalFollowsRepository implements FollowsRepository {
@@ -92,10 +93,11 @@ export class RelationalFollowsRepository implements FollowsRepository {
 
   async findFollowers(
     userId: string,
-    page: number,
-    limit: number,
+    paginationDto: PaginationDto,
     status?: FollowStatus,
   ): Promise<{ data: FollowerResult[]; total: number }> {
+    const { limit } = paginationDto;
+
     const queryBuilder = this.followsRepository
       .createQueryBuilder('follow')
       .innerJoinAndSelect('follow.follower', 'follower')
@@ -107,7 +109,7 @@ export class RelationalFollowsRepository implements FollowsRepository {
 
     const [follows, total] = await queryBuilder
       .orderBy('follow.since', 'DESC')
-      .skip((page - 1) * limit)
+      .skip(paginationDto.skip)
       .take(limit)
       .getManyAndCount();
 
@@ -125,10 +127,10 @@ export class RelationalFollowsRepository implements FollowsRepository {
 
   async findFollowing(
     userId: string,
-    page: number,
-    limit: number,
+    paginationDto: PaginationDto,
     status?: FollowStatus,
   ): Promise<{ data: FollowerResult[]; total: number }> {
+    const { limit } = paginationDto;
     const queryBuilder = this.followsRepository
       .createQueryBuilder('follow')
       .innerJoinAndSelect('follow.followee', 'followee')
@@ -140,7 +142,7 @@ export class RelationalFollowsRepository implements FollowsRepository {
 
     const [follows, total] = await queryBuilder
       .orderBy('follow.since', 'DESC')
-      .skip((page - 1) * limit)
+      .skip(paginationDto.skip)
       .take(limit)
       .getManyAndCount();
 
