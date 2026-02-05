@@ -13,6 +13,7 @@ import { NotificationsService } from '../services/notifications.service';
 import { SocialService } from '../../social/services/social.service';
 import { FollowStatus } from '../../social/types';
 import { FirebasePushNotificationsService } from 'src/infra/firebase/services/firebase-notifications.service';
+import { PaginationDto } from 'src/common/pagination/pagination.dto';
 
 @Processor('notifications')
 @Injectable()
@@ -63,10 +64,13 @@ export class NotificationsProcessor {
         let hasMore = true;
 
         while (hasMore) {
+          const paginationDto = new PaginationDto();
+          paginationDto.page = page;
+          paginationDto.limit = batchSize;
+
           const { data: followers } = await this.socialService.getFollowers(
             actorId,
-            page,
-            batchSize,
+            paginationDto,
             FollowStatus.ACCEPTED,
           );
 

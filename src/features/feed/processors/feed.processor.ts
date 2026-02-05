@@ -15,6 +15,7 @@ import {
 } from '../interfaces/job-data.interface';
 import { FollowStatus } from 'src/features/social/types';
 import { Kudos, KudosState } from 'src/features/posts/entities/kudos.entity';
+import { PaginationDto } from 'src/common/pagination/pagination.dto';
 
 @Processor('feed-fanout')
 @Injectable()
@@ -48,14 +49,16 @@ export class FeedProcessor {
 
     try {
       while (hasMore) {
-        // Get batch of ACCEPTED followers from Neo4j
-        const { data: followers, total } =
-          await this.socialService.getFollowers(
-            actorId,
-            page,
-            batchSize,
-            FollowStatus.ACCEPTED,
-          );
+        // Get batch of ACCEPTED followers
+        const paginationDto = new PaginationDto();
+        paginationDto.page = page;
+        paginationDto.limit = batchSize;
+
+        const { data: followers } = await this.socialService.getFollowers(
+          actorId,
+          paginationDto,
+          FollowStatus.ACCEPTED,
+        );
 
         if (followers.length === 0) {
           hasMore = false;

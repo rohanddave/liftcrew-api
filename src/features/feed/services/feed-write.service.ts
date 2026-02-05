@@ -12,6 +12,7 @@ import {
   CleanupFeedJobData,
 } from '../interfaces/job-data.interface';
 import { FollowStatus } from 'src/features/social/types';
+import { PaginationDto } from 'src/common/pagination/pagination.dto';
 
 @Injectable()
 export class FeedWriteService {
@@ -74,10 +75,13 @@ export class FeedWriteService {
     activityAt: Date,
   ): Promise<void> {
     // Get all ACCEPTED followers
+    const paginationDto = new PaginationDto();
+    paginationDto.page = 1;
+    paginationDto.limit = this.DIRECT_WRITE_THRESHOLD;
+
     const { data: followers } = await this.socialService.getFollowers(
       actorId,
-      1,
-      this.DIRECT_WRITE_THRESHOLD,
+      paginationDto,
       FollowStatus.ACCEPTED,
     );
 
