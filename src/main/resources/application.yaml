@@ -1,0 +1,31 @@
+spring:
+  name: liftcrew-api
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/liftcrew}
+    password: ${SPRING_DATASOURCE_PASSWORD:defaultpass}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          batch_size: 50
+  cache:
+    type: redis
+
+server:
+  port: 8080
+  compression:
+    enabled: true
+  tomcat:
+    threads:
+      max: 200                        # max worker threads
+      min-spare: 10                   # minimum idle threads
+    max-connections: 8192             # max concurrent connections
+    accept-count: 100                 # queue size when all threads are busy
+    connection-timeout: 5000          # timeout for idle connections (ms)
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: 86400000
